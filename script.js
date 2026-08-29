@@ -132,106 +132,46 @@ function fileToCompressedBlob(file,maxDim=1800,quality=.82){
 
 
 /* ============================================================
-   SUPABASE
+   SUPABASE — совместимость со старыми config.js
    ============================================================ */
 let supabaseClient = null;
 let currentUser = null;
-
 async function initCloud(){
   const cfg=window.MUSEUM_CONFIG || {};
-  if(!cfg.enabled || !window.supabase) return {enabled:false};
+  const key=cfg.supabaseKey || cfg.supabaseAnonKey || cfg.supabasePublishableKey || '';
+  if(!cfg.enabled || !window.supabase || !cfg.supabaseUrl || !key) return {enabled:false};
   try{
-    supabaseClient=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey,{
-      auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}
-    });
+    supabaseClient=window.supabase.createClient(cfg.supabaseUrl,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
     let {data:{session}}=await supabaseClient.auth.getSession();
-    if(!session){
-      const {data,error}=await supabaseClient.auth.signInAnonymously();
-      if(error) throw error;
-      session=data.session;
-    }
-    currentUser=session?.user || null;
-    return {enabled:true,user:currentUser};
-  }catch(error){
-    console.error('Supabase init failed',error);
-    return {enabled:false,error};
-  }
+    if(!session){ const {data,error}=await supabaseClient.auth.signInAnonymously(); if(error) throw error; session=data.session; }
+    currentUser=session?.user || null; return {enabled:true,user:currentUser};
+  }catch(error){ console.error('Supabase init failed',error); return {enabled:false,error}; }
 }
 
 /* ============================================================
-   АТМОСФЕРА — ТАШКЕНТ (UTC+5), сезон + время суток
-   Важно: не используем часовой пояс браузера. Сайт всегда
-   рассчитывает атмосферу по Asia/Tashkent.
-   Для ручного теста в config.js:
-     seasonMode: "winter" | "spring" | "summer" | "autumn" | "auto"
-     timeMode: "day" | "night" | "auto"
+   ЖИВАЯ АТМОСФЕРА — ТАШКЕНТ / UTC+5
    ============================================================ */
-(function seasonalTheme(){
-  const cfg = window.MUSEUM_CONFIG || {};
-  const TZ = 'Asia/Tashkent';
-
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: TZ,
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', hour12: false
-  }).formatToParts(new Date());
-  const get = type => Number(parts.find(p => p.type === type)?.value || 0);
-  const month = get('month');
-  const hour = get('hour') % 24;
-  const minute = get('minute');
-
-  const forcedSeason = String(cfg.seasonMode || 'auto').toLowerCase();
-  const season = forcedSeason !== 'auto' ? forcedSeason :
-    ([12,1,2].includes(month) ? 'winter' :
-     ([3,4,5].includes(month) ? 'spring' :
-      ([6,7,8].includes(month) ? 'summer' : 'autumn')));
-
-  // Ташкент: день 06:00–18:59, ночь 19:00–05:59.
-  const forcedTime = String(cfg.timeMode || 'auto').toLowerCase();
-  const timeOfDay = forcedTime === 'auto'
-    ? ((hour >= 6 && hour < 19) ? 'day' : 'night')
-    : (forcedTime === 'night' ? 'night' : 'day');
-
-  document.body.classList.remove(
-    'season-winter','season-spring','season-summer','season-autumn',
-    'time-day','time-night'
-  );
-  document.body.classList.add(`season-${season}`, `time-${timeOfDay}`);
-  document.body.dataset.season = season;
-  document.body.dataset.timeOfDay = timeOfDay;
-  document.body.dataset.tashkentHour = String(hour);
-
-  const badge = document.getElementById('seasonBadge');
-  const labels = {
-    winter: 'зима', spring: 'весна', summer: 'лето', autumn: 'осень'
-  };
-  const timeLabels = {day:'день', night:'ночь'};
-  if (badge) badge.textContent = `${labels[season] || season} · ${timeLabels[timeOfDay]}`;
-
-  const decor = document.getElementById('seasonDecor');
-  if (!decor) return;
-  const glyphs = {
-    winter:['❄','·','✦'],
-    spring:['✿','·','❀'],
-    summer:['·','✦','˚'],
-    autumn:['❧','·','✦']
-  };
-  const chars = glyphs[season] || glyphs.summer;
-  for(let i=0;i<18;i++){
-    const p = document.createElement('span');
-    p.className = 'season-particle';
-    p.textContent = chars[i % chars.length];
-    p.style.left = (Math.random()*100) + 'vw';
-    p.style.top = (-10-Math.random()*30) + 'vh';
-    p.style.animationDelay = (Math.random()*12) + 's';
-    p.style.animationDuration = (10+Math.random()*12) + 's';
-    p.style.setProperty('--drift',(Math.random()*80-40)+'px');
-    decor.appendChild(p);
+(function liveAtmosphere(){
+  const cfg=window.MUSEUM_CONFIG||{}, TZ='Asia/Tashkent', root=document.body;
+  const badge=document.getElementById('seasonBadge'), decor=document.getElementById('seasonDecor');
+  const seasons={winter:'зима',spring:'весна',summer:'лето',autumn:'осень'};
+  const times={predawn:'предрассвет',dawn:'рассвет',morning:'утро',day:'день',golden:'золотой час',sunset:'закат',twilight:'сумерки',night:'ночь'};
+  const glyphs={winter:['❄','✦','·','❅'],spring:['✿','❀','·','✧'],summer:['˚','✦','·','☼'],autumn:['❧','✦','·','❦']};
+  function now(){
+    const ps=new Intl.DateTimeFormat('en-US',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).formatToParts(new Date());
+    const n=k=>Number(ps.find(p=>p.type===k)?.value||0); return {year:n('year'),month:n('month'),day:n('day'),hour:n('hour')%24,minute:n('minute'),second:n('second')};
   }
-
-  // Если пользователь оставил вкладку открытой через полночь/смену сезона,
-  // атмосфера обновится без перезагрузки.
-  setTimeout(() => location.reload(), (60 - minute) * 60 * 1000);
+  function season(m){return [12,1,2].includes(m)?'winter':[3,4,5].includes(m)?'spring':[6,7,8].includes(m)?'summer':'autumn';}
+  function time(h,m){const t=h+m/60; if(t<5)return'night';if(t<6)return'predawn';if(t<8)return'dawn';if(t<11)return'morning';if(t<17)return'day';if(t<18.5)return'golden';if(t<20.5)return'sunset';if(t<22)return'twilight';return'night';}
+  function calculate(){const n=now();const sm=String(cfg.seasonMode||'auto').toLowerCase();const tm=String(cfg.timeMode||'auto').toLowerCase();const aliases={dusk:'sunset','pre-dawn':'predawn'};return {...n,season:['winter','spring','summer','autumn'].includes(sm)?sm:season(n.month),timeOfDay:aliases[tm]||(['predawn','dawn','morning','day','golden','sunset','twilight','night'].includes(tm)?tm:time(n.hour,n.minute))};}
+  function paint(st){
+    root.classList.remove('season-winter','season-spring','season-summer','season-autumn','time-predawn','time-dawn','time-morning','time-day','time-golden','time-sunset','time-twilight','time-night');
+    root.classList.add('season-'+st.season,'time-'+st.timeOfDay); root.dataset.season=st.season;root.dataset.timeOfDay=st.timeOfDay;root.dataset.timezone=TZ;
+    if(badge) badge.textContent=`${seasons[st.season]} · ${times[st.timeOfDay]} · ${String(st.hour).padStart(2,'0')}:${String(st.minute).padStart(2,'0')}`;
+    if(decor){const key=st.season+'-'+st.timeOfDay;if(decor.dataset.key!==key){decor.dataset.key=key;decor.replaceChildren();const count={predawn:8,dawn:10,morning:12,day:9,golden:12,sunset:16,twilight:19,night:24}[st.timeOfDay]||12;for(let i=0;i<count;i++){const e=document.createElement('span');e.className='season-particle';e.textContent=glyphs[st.season][i%glyphs[st.season].length];e.style.left=Math.random()*100+'vw';e.style.top=(-10-Math.random()*30)+'vh';e.style.animationDelay=Math.random()*12+'s';e.style.animationDuration=10+Math.random()*16+'s';e.style.setProperty('--drift',(Math.random()*120-60)+'px');decor.appendChild(e);}}}
+    window.dispatchEvent(new CustomEvent('museum:atmosphere',{detail:st}));
+  }
+  paint(calculate()); setInterval(()=>paint(calculate()),15000);
 })();
 
 /* ============================================================
@@ -277,78 +217,23 @@ async function initCloud(){
 
 
 /* ============================================================
-   ВИНИЛ + ПОЛНОЦЕННЫЙ ПЛЕЕР
+   ВИНИЛ + ПЛЕЕР — один трек или библиотека
    ============================================================ */
 (function vinyl(){
-  const btn = document.getElementById('vinylBtn');
-  const disc = document.getElementById('vinylDisc');
-  const arm = document.getElementById('vinylArm');
-  const audio = document.getElementById('bgm');
-  const progress = document.getElementById('musicProgress');
-  const current = document.getElementById('musicCurrent');
-  const duration = document.getElementById('musicDuration');
-  const status = document.getElementById('musicStatus');
-  const mute = document.getElementById('musicMute');
-  const title = document.getElementById('musicTitle');
-  const cfg = window.MUSEUM_CONFIG || {};
-  if(!btn || !audio) return;
-
-  const source = cfg.musicUrl || 'music/song.mp3';
-  audio.src = source;
-  if(title && cfg.musicTitle) title.textContent = cfg.musicTitle;
-  let muted = false;
-
-  const fmt = sec => {
-    if(!Number.isFinite(sec)) return '0:00';
-    const m = Math.floor(sec/60), s = Math.floor(sec%60);
-    return `${m}:${String(s).padStart(2,'0')}`;
-  };
-  function setPlaying(on){
-    disc?.classList.toggle('playing',on);
-    arm?.classList.toggle('playing',on);
-    btn.textContent = on ? 'Ⅱ' : '▶';
-    btn.setAttribute('aria-label', on ? 'Пауза' : 'Включить песню');
-  }
-  btn.addEventListener('click',async()=>{
-    if(audio.paused){
-      try{
-        await audio.play();
-        setPlaying(true);
-        if(status) status.textContent='играет сейчас';
-      }catch(err){
-        setPlaying(false);
-        if(status) status.textContent='не удалось открыть музыку — проверь music/song.mp3';
-      }
-    }else{
-      audio.pause();
-      setPlaying(false);
-      if(status) status.textContent='пауза';
-    }
-  });
-  audio.addEventListener('loadedmetadata',()=>{
-    if(duration) duration.textContent=fmt(audio.duration);
-  });
-  audio.addEventListener('timeupdate',()=>{
-    if(current) current.textContent=fmt(audio.currentTime);
-    if(progress && Number.isFinite(audio.duration) && audio.duration>0) progress.value=(audio.currentTime/audio.duration)*100;
-  });
-  progress?.addEventListener('input',()=>{
-    if(Number.isFinite(audio.duration) && audio.duration>0) audio.currentTime=(Number(progress.value)/100)*audio.duration;
-  });
-  audio.addEventListener('play',()=>setPlaying(true));
-  audio.addEventListener('pause',()=>setPlaying(false));
-  audio.addEventListener('error',()=>{
-    setPlaying(false);
-    if(status) status.textContent='музыка не найдена — добавь файл music/song.mp3';
-  });
-  mute?.addEventListener('click',()=>{
-    muted=!muted;
-    audio.muted=muted;
-    mute.textContent=muted?'×':'⌕';
-    mute.setAttribute('aria-label',muted?'Включить звук':'Выключить звук');
-  });
+  const btn=document.getElementById('vinylBtn'),disc=document.getElementById('vinylDisc'),arm=document.getElementById('vinylArm'),audio=document.getElementById('bgm');
+  const progress=document.getElementById('musicProgress'),current=document.getElementById('musicCurrent'),duration=document.getElementById('musicDuration'),status=document.getElementById('musicStatus'),mute=document.getElementById('musicMute'),title=document.getElementById('musicTitle');
+  const cfg=window.MUSEUM_CONFIG||{}; if(!btn||!audio)return;
+  const tracks=Array.isArray(cfg.musicTracks)&&cfg.musicTracks.length?cfg.musicTracks:[{url:cfg.musicUrl||'music/song.mp3',title:cfg.musicTitle||'наша песня',note:cfg.musicNote||'эта песня напоминает мне о тебе'}];
+  let index=Math.max(0,Math.min(Number(cfg.musicStartIndex||0),tracks.length-1)), muted=false;
+  const fmt=s=>Number.isFinite(s)?`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`:'0:00';
+  function setPlaying(on){disc?.classList.toggle('playing',on);arm?.classList.toggle('playing',on);btn.textContent=on?'Ⅱ':'▶';}
+  function list(){if(tracks.length<2)return;let box=document.getElementById('musicTrackList');if(!box){box=document.createElement('div');box.id='musicTrackList';box.className='music-track-list';document.getElementById('musicPlayer')?.appendChild(box);}box.innerHTML=tracks.map((t,i)=>`<button class="music-track-item ${i===index?'active':''}" type="button" data-track="${i}"><span>${String(i+1).padStart(2,'0')}</span><b>${escapeHtml(t.title||'трек '+(i+1))}</b></button>`).join('');box.querySelectorAll('[data-track]').forEach(b=>b.onclick=()=>load(Number(b.dataset.track),true));}
+  function load(i,play=false){index=(i+tracks.length)%tracks.length;const t=tracks[index]||{};audio.src=t.url||'';audio.load();if(title)title.textContent=t.title||'наша песня';const note=document.getElementById('vinylNote');if(note)note.textContent=t.note||'эта песня напоминает мне о тебе';if(status)status.textContent=`${index+1} / ${tracks.length} · готово`;list();if(play)audio.play().catch(()=>{});}
+  btn.onclick=async()=>{if(audio.paused){try{await audio.play();setPlaying(true);if(status)status.textContent='играет сейчас';}catch(_){if(status)status.textContent='не удалось воспроизвести — проверь файл музыки';}}else{audio.pause();setPlaying(false);if(status)status.textContent='пауза';}};
+  audio.onloadedmetadata=()=>{if(duration)duration.textContent=fmt(audio.duration)}; audio.ontimeupdate=()=>{if(current)current.textContent=fmt(audio.currentTime);if(progress&&audio.duration)progress.value=audio.currentTime/audio.duration*100};
+  progress?.addEventListener('input',()=>{if(audio.duration)audio.currentTime=Number(progress.value)/100*audio.duration}); audio.onplay=()=>setPlaying(true);audio.onpause=()=>setPlaying(false);audio.onended=()=>tracks.length>1?load(index+1,true):setPlaying(false);audio.onerror=()=>{setPlaying(false);if(status)status.textContent='файл музыки не найден'};
+  mute?.addEventListener('click',()=>{muted=!muted;audio.muted=muted;mute.textContent=muted?'×':'⌕'}); load(index);
 })();
-
 
 /* ============================================================
    МИНИ-ИГРА: собери сердца

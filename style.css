@@ -711,107 +711,53 @@ body.season-summer .eyebrow,body.season-summer .cd-block span{color:#e2c47c}
 @media (prefers-reduced-motion:reduce){#seasonDecor{display:none}}
 @media (max-width:600px){.music-player{padding:16px}.music-controls{gap:8px}.music-play,.music-volume{width:34px;height:34px;flex-basis:34px}.museum-stats{gap:5px}.museum-stats span{font-size:.56rem}}
 
-/* ============ ЖИВАЯ АТМОСФЕРА: ТАШКЕНТ + СЕЗОН ============ */
-body{transition:background-color 1.2s ease,color 1.2s ease}
-#stars,.season-badge,#seasonDecor{transition:opacity 1.2s ease,background 1.5s ease,color 1.2s ease}
-
-body.time-dawn{
-  --bg:#17161a; --bg-soft:#211f25; --glass:rgba(255,255,255,.065);
-  --glass-strong:rgba(255,255,255,.10); --glass-border:rgba(255,255,255,.14);
-  --ink:#f7f0e5; --ink-dim:#b9b1ab;
-}
+/* ============ АВТОМАТИЧЕСКАЯ АТМОСФЕРА: ДЕНЬ / НОЧЬ ============ */
 body.time-day{
-  --bg:#10151a; --bg-soft:#171e25; --glass:rgba(255,255,255,.07);
-  --glass-strong:rgba(255,255,255,.11); --glass-border:rgba(255,255,255,.15);
-  --ink:#f7f2e9; --ink-dim:#b7bbc0;
-}
-body.time-dusk{
-  --bg:#151116; --bg-soft:#21171a; --glass:rgba(255,255,255,.06);
-  --glass-strong:rgba(255,255,255,.10); --glass-border:rgba(255,255,255,.13);
-  --ink:#f7eee4; --ink-dim:#b9aaa5;
+  --bg:#10131a;
+  --bg-soft:#171b24;
+  --glass:rgba(255,255,255,.065);
+  --glass-strong:rgba(255,255,255,.105);
+  --glass-border:rgba(255,255,255,.14);
+  --ink:#f5f1e8;
+  --ink-dim:#b1b5bf;
 }
 body.time-night{
-  --bg:#05070d; --bg-soft:#0a0e19; --glass:rgba(255,255,255,.045);
-  --glass-strong:rgba(255,255,255,.08); --glass-border:rgba(255,255,255,.10);
-  --ink:#f3efe6; --ink-dim:#9aa0ad;
+  --bg:#05070d;
+  --bg-soft:#0a0e19;
+  --glass:rgba(255,255,255,.045);
+  --glass-strong:rgba(255,255,255,.08);
+  --glass-border:rgba(255,255,255,.10);
+  --ink:#f3efe6;
+  --ink-dim:#9aa0ad;
 }
 
-body.season-winter{--season-accent:#cfe4f2}
-body.season-spring{--season-accent:#d8b7d5}
-body.season-summer{--season-accent:#e8cf88}
-body.season-autumn{--season-accent:#cf9568}
+body.time-day #stars{
+  opacity:.38;
+}
+body.time-night #stars{
+  opacity:1;
+}
+body.time-day #seasonDecor{
+  opacity:.18;
+}
+body.time-night #seasonDecor{
+  opacity:.42;
+}
+body.time-day .season-badge{
+  background:rgba(255,255,255,.10);
+}
+body.time-night .season-badge{
+  background:rgba(5,7,13,.35);
+}
 
-/* Свет меняется в течение суток */
-body.time-dawn #stars{opacity:.55}
-body.time-day #stars{opacity:.35}
-body.time-dusk #stars{opacity:.72}
-body.time-night #stars{opacity:1}
-body.time-dawn #seasonDecor{opacity:.20}
-body.time-day #seasonDecor{opacity:.16}
-body.time-dusk #seasonDecor{opacity:.32}
-body.time-night #seasonDecor{opacity:.48}
+/* Сезонные дневные градиенты */
+body.time-day.season-winter #stars{background:radial-gradient(ellipse at 50% 15%,#263545 0%,#0d1118 72%)}
+body.time-day.season-spring #stars{background:radial-gradient(ellipse at 50% 15%,#30263a 0%,#11131b 72%)}
+body.time-day.season-summer #stars{background:radial-gradient(ellipse at 50% 15%,#3a3322 0%,#11141b 72%)}
+body.time-day.season-autumn #stars{background:radial-gradient(ellipse at 50% 15%,#3b2920 0%,#121217 72%)}
 
-/* Рассвет */
-body.time-dawn.season-winter #stars{background:radial-gradient(ellipse at 50% 12%,#303b48 0%,#11151c 72%)}
-body.time-dawn.season-spring #stars{background:radial-gradient(ellipse at 50% 12%,#3b3040 0%,#15141b 72%)}
-body.time-dawn.season-summer #stars{background:radial-gradient(ellipse at 50% 12%,#403a2a 0%,#17171b 72%)}
-body.time-dawn.season-autumn #stars{background:radial-gradient(ellipse at 50% 12%,#493126 0%,#171419 72%)}
-
-/* День */
-body.time-day.season-winter #stars{background:radial-gradient(ellipse at 50% 8%,#304252 0%,#10161c 72%)}
-body.time-day.season-spring #stars{background:radial-gradient(ellipse at 50% 8%,#3a3042 0%,#12161b 72%)}
-body.time-day.season-summer #stars{background:radial-gradient(ellipse at 50% 8%,#4a4128 0%,#12181b 72%)}
-body.time-day.season-autumn #stars{background:radial-gradient(ellipse at 50% 8%,#493126 0%,#141719 72%)}
-
-/* Золотой час / закат */
-body.time-dusk.season-winter #stars{background:radial-gradient(ellipse at 50% 18%,#34303a 0%,#121018 72%)}
-body.time-dusk.season-spring #stars{background:radial-gradient(ellipse at 50% 18%,#44313e 0%,#151018 72%)}
-body.time-dusk.season-summer #stars{background:radial-gradient(ellipse at 50% 18%,#59402b 0%,#171018 72%)}
-body.time-dusk.season-autumn #stars{background:radial-gradient(ellipse at 50% 18%,#5a3323 0%,#171016 72%)}
-
-/* Ночь */
+/* Ночная версия — заметно глубже и контрастнее */
 body.time-night.season-winter #stars{background:radial-gradient(ellipse at 50% 20%,#111d2a 0%,#05070d 72%)}
 body.time-night.season-spring #stars{background:radial-gradient(ellipse at 50% 20%,#171522 0%,#05070d 72%)}
 body.time-night.season-summer #stars{background:radial-gradient(ellipse at 50% 20%,#151a24 0%,#05070d 72%)}
 body.time-night.season-autumn #stars{background:radial-gradient(ellipse at 50% 20%,#211813 0%,#05070d 72%)}
-
-/* Время суток слегка влияет и на декоративную золотую типографику */
-body.time-dawn .eyebrow{color:color-mix(in srgb,var(--season-accent),white 8%)}
-body.time-day .eyebrow{color:var(--season-accent)}
-body.time-dusk .eyebrow{color:var(--season-accent)}
-body.time-night .eyebrow{color:var(--season-accent)}
-body.time-day .season-badge{background:rgba(255,255,255,.10)}
-body.time-dawn .season-badge{background:rgba(255,255,255,.08)}
-body.time-dusk .season-badge{background:rgba(25,10,10,.24)}
-body.time-night .season-badge{background:rgba(5,7,13,.35)}
-
-@media (prefers-reduced-motion:reduce){
-  body,#stars,.season-badge,#seasonDecor{transition:none}
-  #seasonDecor{display:none}
-}
-
-
-/* ============================================================
-   ATMOSPHERE V4 — полноценный цикл света
-   ============================================================ */
-:root{--season-accent:#e8cf88;--sky-glow:rgba(120,150,190,.08);--horizon-glow:rgba(212,175,106,.05)}
-body{position:relative;isolation:isolate;transition:background-color 1.4s ease,color 1.4s ease}
-body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(circle at 50% 10%,var(--sky-glow),transparent 45%),radial-gradient(ellipse at 50% 100%,var(--horizon-glow),transparent 58%);opacity:.95;transition:background 2s ease,opacity 1.5s ease}
-body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;background:linear-gradient(to bottom,rgba(255,255,255,.025),transparent 25%,transparent 72%,rgba(0,0,0,.16));opacity:.55;transition:opacity 1.5s ease}
-#story,#gate,.side-nav,.season-badge{position:relative;z-index:3}
-body.season-winter{--season-accent:#cfe5f4}body.season-spring{--season-accent:#dfc2d9}body.season-summer{--season-accent:#e8cf88}body.season-autumn{--season-accent:#d49a6b}
-body.time-predawn{--sky-glow:rgba(72,79,116,.15);--horizon-glow:rgba(112,82,104,.09)}
-body.time-dawn{--sky-glow:rgba(210,148,126,.18);--horizon-glow:rgba(238,174,107,.12)}
-body.time-morning{--sky-glow:rgba(170,188,208,.14);--horizon-glow:rgba(219,198,151,.07)}
-body.time-day{--sky-glow:rgba(128,165,194,.11);--horizon-glow:rgba(224,205,157,.055)}
-body.time-golden{--sky-glow:rgba(221,151,72,.19);--horizon-glow:rgba(242,184,91,.14)}
-body.time-sunset{--sky-glow:rgba(185,86,70,.19);--horizon-glow:rgba(231,142,73,.13)}
-body.time-twilight{--sky-glow:rgba(83,71,122,.16);--horizon-glow:rgba(144,91,92,.08)}
-body.time-night{--sky-glow:rgba(62,90,145,.10);--horizon-glow:rgba(87,70,118,.055)}
-body.time-predawn #stars{opacity:.68}body.time-dawn #stars{opacity:.48}body.time-morning #stars{opacity:.20}body.time-day #stars{opacity:.10}body.time-golden #stars{opacity:.24}body.time-sunset #stars{opacity:.48}body.time-twilight #stars{opacity:.82}body.time-night #stars{opacity:1}
-body.time-predawn #seasonDecor{opacity:.10}body.time-dawn #seasonDecor{opacity:.16}body.time-morning #seasonDecor{opacity:.15}body.time-day #seasonDecor{opacity:.13}body.time-golden #seasonDecor{opacity:.22}body.time-sunset #seasonDecor{opacity:.30}body.time-twilight #seasonDecor{opacity:.40}body.time-night #seasonDecor{opacity:.52}
-.season-particle{text-shadow:0 0 10px color-mix(in srgb,var(--season-accent),transparent 65%)}
-.music-track-list{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px;padding-top:13px;border-top:1px solid var(--glass-border)}
-.music-track-item{display:flex;align-items:center;gap:7px;padding:7px 9px;border:1px solid var(--glass-border);border-radius:999px;background:transparent;color:var(--ink-dim);cursor:pointer;font:.65rem var(--mono);transition:.25s}
-.music-track-item span{opacity:.55}.music-track-item b{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}.music-track-item:hover,.music-track-item.active{border-color:var(--gold);color:var(--ink);background:rgba(212,175,106,.07)}
-@media(prefers-reduced-motion:reduce){body::before,body::after{transition:none}.season-particle{animation:none!important}.music-track-item{transition:none}}

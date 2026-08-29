@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>для тебя</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Manrope:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+</head>
+<body class="locked">
+
+<canvas id="stars"></canvas>
+<div id="seasonDecor" aria-hidden="true"></div>
+<div id="seasonBadge" class="season-badge" aria-hidden="true"></div>
+
+<!-- ============ ВОРОТА: простая активация ============ -->
+<div id="gate">
+  <section id="gate-intro" class="gate-panel active">
+    <p class="eyebrow">это место только для вас двоих</p>
+    <h1 class="type-target" id="introType"></h1>
+    <p class="gate-sub">ваш маленький уголок, который можно продолжать всю жизнь.</p>
+    <button class="solid-btn gate-open-btn" id="introBtn">открыть наш мир</button>
+    <button class="gate-reset-btn" id="gateResetBtn" type="button">сбросить активацию на этом устройстве</button>
+  </section>
+</div>
+
+<!-- ============ ОСНОВНАЯ ИСТОРИЯ ============ -->
+<main id="story">
+
+  <!-- ---- Сцена: пролог ---- -->
+  <section class="scene" id="scene-open" data-nav="начало">
+    <div class="scene-inner">
+      <p class="eyebrow">дверь открыта</p>
+      <h2 class="scene-title reveal">теперь можно листать дальше, пингвинёнок</h2>
+      <p class="scene-text">то, что дальше — это мы. без фильтров, без 2012 года с красными сердечками. просто как всё было на самом деле.</p>
+      <div class="scroll-cue"><span></span></div>
+    </div>
+  </section>
+
+  <!-- ---- Сцена: временная линия ---- -->
+  <section class="scene" id="scene-timeline" data-nav="истории">
+    <div class="scene-inner wide">
+      <p class="eyebrow">три истории</p>
+      <h2 class="scene-title reveal">то, что я не забуду</h2>
+
+      <div class="timeline reveal">
+
+        <article class="tl-item">
+          <div class="tl-date">26.06</div>
+          <div class="tl-body">
+            <h3>милая дверь</h3>
+            <p>мы вышли гулять после универа — фотографировались в автобусе, ловили голубей на Максимке, потом пешком дошли до Ойбека. ты сидела на корточках у метро, вымотанная до предела, а мы всю дорогу прятались от моих знакомых, потому что оба стеснялись. уже почти дойдя до дома, я сказал — «оо, миленькая дверь» — и мы зашли. внутри оказалась крошечная уютная кофейня в пастельных тонах. я тогда раскошелился на клубничный десерт, и когда ты попробовала его и протянула тёплое «уммм, как вкусно» — у тебя так расширились зрачки, что я увидел в них своё отражение. вот тогда я понял: влюблён по уши. и что бы ни случилось, я всегда сделаю 51 шаг из 100 навстречу тебе.</p>
+          </div>
+        </article>
+
+        <article class="tl-item">
+          <div class="tl-date">лето</div>
+          <div class="tl-body">
+            <h3>подруга, которую я не хотел терять</h3>
+            <p>после того, как ты рассталась, я вкладывал все силы, чтобы помочь тебе прийти в себя — ты была моим близким человеком и тайной влюблённостью, в которой я сам себе долго не признавался. запомнились наши дурачества, фильмы и даже дорамы, которые я ненавидел всей душой, но смотрел ради тебя. запомнилось, как ты закидывала ноги мне на колени, а я делал вид, что это совершенно обычное дело, хотя внутри волновался как подросток. запомнилась первая поездка на самокате вдвоём — рулилось плохо, ты держалась сзади, и это было что-то совсем другое, чем просто «подруга держится, чтобы не упасть». когда мы начали встречаться, прокат самоката стал нашей традицией — и мы всё так же дурачимся на нём, только теперь уже не понарошку.</p>
+          </div>
+        </article>
+
+        <article class="tl-item">
+          <div class="tl-date">перед отъездом</div>
+          <div class="tl-body">
+            <h3>парк аттракционов</h3>
+            <p>наша последняя прогулка перед твоим отъездом. в тот день мы успели поссориться на волонтёрстве и помириться, но настроение к тебе так и не вернулось — тогда я повёз тебя в парк через дорогу, место из моего детства, куда мы ходили с сестрой. там мы впервые вместе попробовали VR, катались на аттракционах, которые возвращают в детство по-настоящему, а потом взяли лодку на озере и наконец проговорили всё, что накопилось. день вышел похожим на сами аттракционы — качели настроения вверх-вниз, но всё равно один из самых тёплых дней за это лето.</p>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ---- Сцена: полароиды ---- -->
+  <section class="scene" id="scene-gallery" data-nav="полароиды">
+    <div class="scene-inner wide">
+      <p class="eyebrow">на столе</p>
+      <h2 class="scene-title reveal">разбросанные полароиды</h2>
+      <p class="scene-text small">потрогай их — ими можно двигать</p>
+
+      <div class="polaroid-desk reveal" id="polaroidDesk">
+        <figure class="polaroid" style="--r:-7deg; top:6%; left:6%;">
+          <div class="polaroid-photo"><img src="photos/1.jpg" alt="Наш кадр 1" loading="lazy" onerror="this.hidden=true;this.parentElement.classList.add('missing-photo')"></div>
+          <figcaption>0.5x, чтобы ты снова стала гномиком</figcaption>
+        </figure>
+        <figure class="polaroid" style="--r:5deg; top:10%; left:52%;">
+          <div class="polaroid-photo"><img src="photos/2.jpg" alt="Наш кадр 2" loading="lazy" onerror="this.hidden=true;this.parentElement.classList.add('missing-photo')"></div>
+          <figcaption>пингвинёнок в естественной среде</figcaption>
+        </figure>
+        <figure class="polaroid" style="--r:-3deg; top:46%; left:20%;">
+          <div class="polaroid-photo"><img src="photos/3.jpg" alt="Наш кадр 3" loading="lazy" onerror="this.hidden=true;this.parentElement.classList.add('missing-photo')"></div>
+          <figcaption>вся удача мира перешла мне — спасибо, что делишься</figcaption>
+        </figure>
+        <figure class="polaroid" style="--r:8deg; top:50%; left:60%;">
+          <div class="polaroid-photo"><img src="photos/4.jpg" alt="Наш кадр 4" loading="lazy" onerror="this.hidden=true;this.parentElement.classList.add('missing-photo')"></div>
+          <figcaption>карманных денег хватило ровно на «14 лет»</figcaption>
+        </figure>
+        <figure class="polaroid" style="--r:-10deg; top:2%; left:30%;">
+          <div class="polaroid-photo"><img src="photos/5.jpg" alt="Наш кадр 5" loading="lazy" onerror="this.hidden=true;this.parentElement.classList.add('missing-photo')"></div>
+          <figcaption>буся, исчадие ада, самая моя</figcaption>
+        </figure>
+        <figure class="polaroid" style="--r:4deg; top:40%; left:40%;">
+          <div class="polaroid-photo"><img src="photos/6.jpg" alt="Наш кадр 6" loading="lazy" onerror="this.hidden=true;this.parentElement.classList.add('missing-photo')"></div>
+          <figcaption>кроха, которая держит весь мой мир</figcaption>
+        </figure>
+      </div>
+      <p class="scene-note" id="photoNote">положи 1.jpg–6.jpg в папку <code>photos/</code> рядом с сайтом — полароиды подхватятся автоматически.</p>
+      <span class="secret-star" id="secretStar" aria-hidden="true">✦</span>
+    </div>
+  </section>
+
+  <!-- ---- Сцена: музей ---- -->
+  <section class="scene" id="scene-museum" data-nav="музей">
+    <div class="scene-inner wide">
+      <p class="eyebrow">живой архив</p>
+      <h2 class="scene-title reveal">наш музей</h2>
+      <p class="scene-text small">добавляйте сюда фото и истории — сайт растёт вместе с нами</p>
+
+      <div class="museum-status-row reveal">
+        <span class="museum-status" id="museumStatus"><span class="status-dot"></span><span id="museumStatusText">проверяю облако…</span></span>
+        <button class="ghost-btn small-btn" id="museumRefreshBtn" type="button">обновить</button>
+      </div>
+
+      <div class="museum-feature-card reveal" id="museumFeatureCard">
+        <div>
+          <p class="eyebrow">сегодня в музее</p>
+          <h3 id="museumFeatureTitle">здесь пока тихо</h3>
+          <p id="museumFeatureText">Добавьте первое воспоминание — и музей начнёт жить.</p>
+          <div class="museum-stats" id="museumStats" aria-live="polite"></div>
+        </div>
+        <button class="ghost-btn small-btn" id="museumRandomBtn" type="button">случайный кадр</button>
+      </div>
+
+      <div class="museum-toolbar reveal">
+        <button class="solid-btn" id="museumAddBtn">+ добавить воспоминание</button>
+        <button class="ghost-btn small-btn" id="museumExportBtn">резервная копия</button>
+        <button class="ghost-btn small-btn" id="museumImportBtn">восстановить</button>
+        <input type="file" id="museumImportFile" accept="application/json" hidden>
+      </div>
+
+      <div class="museum-grid reveal" id="museumGrid"></div>
+      <p class="museum-empty" id="museumEmpty">пока пусто — добавь первое воспоминание</p>
+
+      <p class="scene-note museum-note">
+        музей синхронизируется через облако. добавленное фото и история появляются на другом устройстве после обновления. локальная резервная копия остаётся на случай, если интернет временно пропадёт.
+      </p>
+    </div>
+  </section>
+
+  <!-- ---- Сцена: винил ---- -->
+  <section class="scene" id="scene-vinyl" data-nav="музыка">
+    <div class="scene-inner">
+      <p class="eyebrow">на фоне</p>
+      <h2 class="scene-title reveal">пластинка крутится</h2>
+      <div class="vinyl-wrap reveal">
+        <div class="vinyl-disc" id="vinylDisc" aria-hidden="true"></div>
+        <div class="vinyl-arm" id="vinylArm" aria-hidden="true"></div>
+      </div>
+      <div class="music-player reveal" id="musicPlayer">
+        <div class="music-meta">
+          <span class="music-kicker">наш саундтрек</span>
+          <strong id="musicTitle">наша песня</strong>
+          <span id="vinylNote">эта песня напоминает мне о тебе</span>
+        </div>
+        <div class="music-controls">
+          <button class="music-play" id="vinylBtn" type="button" aria-label="Включить песню">▶</button>
+          <div class="music-track-wrap">
+            <input id="musicProgress" class="music-progress" type="range" min="0" max="100" value="0" step="0.1" aria-label="Позиция песни">
+            <div class="music-time"><span id="musicCurrent">0:00</span><span id="musicDuration">0:00</span></div>
+          </div>
+          <button class="music-volume" id="musicMute" type="button" aria-label="Выключить звук">⌕</button>
+        </div>
+        <p class="music-status" id="musicStatus">нажми ▶ — музыка начнётся</p>
+      </div>
+      <audio id="bgm" src="music/song.mp3" loop preload="metadata"></audio>
+    </div>
+  </section>
+
+  <!-- ---- Сцена: мини-игра ---- -->
+  <section class="scene" id="scene-game" data-nav="игра">
+    <div class="scene-inner">
+      <p class="eyebrow">почти пришли</p>
+      <h2 class="scene-title reveal">собери сердца, светик</h2>
+      <p class="scene-text small">осталось: <span id="heartsLeft">8</span></p>
+      <div class="heart-field reveal" id="heartField"></div>
+    </div>
+  </section>
+
+  <!-- ---- Сцена: письмо ---- -->
+  <section class="scene" id="scene-letter" data-nav="письмо">
+    <div class="scene-inner">
+      <p class="eyebrow">письмо</p>
+      <div class="letter reveal" id="letterBox">
+        <p id="letterType"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---- Сцена: генератор причин ---- -->
+  <section class="scene" id="scene-reasons" data-nav="причины">
+    <div class="scene-inner">
+      <p class="eyebrow">на случай, если станет грустно без меня</p>
+      <h2 class="scene-title reveal">жми, сколько нужно</h2>
+      <div class="reason-card reveal">
+        <p id="reasonText">потому что...</p>
+      </div>
+      <button class="solid-btn" id="reasonBtn">ещё причина</button>
+      <p class="scene-note">нажато раз: <span id="reasonCount">0</span></p>
+    </div>
+  </section>
+
+  <!-- ---- Финал: счётчик + коробка ---- -->
+  <section class="scene" id="scene-final" data-nav="финал">
+    <div class="scene-inner">
+      <p class="eyebrow" id="finalEyebrow">10 августа, 10:00</p>
+      <h2 class="scene-title reveal" id="finalTitle">до встречи осталось</h2>
+      <div class="countdown reveal" id="countdown">
+        <div class="cd-block"><span id="cdDays">00</span><label>дней</label></div>
+        <div class="cd-block"><span id="cdHours">00</span><label>часов</label></div>
+        <div class="cd-block"><span id="cdMinutes">00</span><label>минут</label></div>
+        <div class="cd-block"><span id="cdSeconds">00</span><label>секунд</label></div>
+      </div>
+
+      <div class="gift-box reveal" id="giftBox">
+        <div class="gift-lid"></div>
+        <div class="gift-base"></div>
+      </div>
+      <p class="scene-note" id="giftHint">нажми на коробку</p>
+
+      <div class="gift-content" id="giftContent">
+        <p>по приезду из Бухары я обниму тебя так крепко, что мы чуть не задохнёмся оба.</p>
+        <p>будем гулять, пока не откажут ноги. есть, пока не заболит живот. говорить, пока не пересохнет во рту. смотреть друг на друга, пока не защиплет глаза. и любить — пока не умрём.</p>
+        <p class="signature">твой Бобур</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<canvas id="confetti"></canvas>
+
+<div class="secret-modal" id="secretModal">
+  <div class="secret-modal-inner">
+    <p class="eyebrow">нашла</p>
+    <p id="secretText"></p>
+    <button class="ghost-btn" id="secretClose">закрыть</button>
+  </div>
+</div>
+
+<div class="museum-modal" id="museumAddModal">
+  <div class="museum-modal-inner">
+    <button class="modal-close" id="museumAddClose" aria-label="Закрыть">✕</button>
+    <h3>новое воспоминание</h3>
+    <label>дата <span class="opt">(необязательно)</span>
+      <input type="text" id="entryDate" placeholder="напр. 12.08 или «этим летом»">
+    </label>
+    <label>заголовок
+      <input type="text" id="entryTitle" placeholder="как это назвать">
+    </label>
+    <label>история
+      <textarea id="entryText" rows="4" placeholder="что произошло"></textarea>
+    </label>
+    <label>фото <span class="opt">(до 6 штук)</span>
+      <input type="file" id="entryPhotos" accept="image/*" multiple>
+    </label>
+    <p class="form-hint" id="cloudHint">Фото будут сжаты и загружены в облачное хранилище.</p>
+    <div class="entry-preview" id="entryPreview"></div>
+    <button class="solid-btn" id="entrySaveBtn">сохранить в музей</button>
+  </div>
+</div>
+
+<div class="museum-modal" id="museumViewModal">
+  <div class="museum-modal-inner wide">
+    <button class="modal-close" id="museumViewClose" aria-label="Закрыть">✕</button>
+    <div id="museumViewContent"></div>
+  </div>
+</div>
+
+<nav class="side-nav" id="sideNav" aria-label="Навигация по разделам"></nav>
+
+<script src="script.js"></script>
+</body>
+</html>

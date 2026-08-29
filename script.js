@@ -159,28 +159,79 @@ async function initCloud(){
 }
 
 /* ============================================================
-   СЕЗОННЫЙ + СУТОЧНЫЙ ДИЗАЙН
+   АТМОСФЕРА — ТАШКЕНТ (UTC+5), сезон + время суток
+   Важно: не используем часовой пояс браузера. Сайт всегда
+   рассчитывает атмосферу по Asia/Tashkent.
+   Для ручного теста в config.js:
+     seasonMode: "winter" | "spring" | "summer" | "autumn" | "auto"
+     timeMode: "day" | "night" | "auto"
    ============================================================ */
 (function seasonalTheme(){
-  const cfg=window.MUSEUM_CONFIG||{};
-  const forced=String(cfg.seasonMode||'auto').toLowerCase();
-  const month=new Date().getMonth()+1;
-  const season=forced!=='auto'?forced:([12,1,2].includes(month)?'winter':([3,4,5].includes(month)?'spring':([6,7,8].includes(month)?'summer':'autumn')));
-  document.body.classList.add(`season-${season}`); document.body.dataset.season=season;
-  const labels={winter:'зима',spring:'весна',summer:'лето',autumn:'осень'};
-  const badge=document.getElementById('seasonBadge'); if(badge)badge.textContent=labels[season]||season;
-  const decor=document.getElementById('seasonDecor');
-  const glyphs={winter:['❄','·','✦'],spring:['✿','·','❀'],summer:['·','✦','˚'],autumn:['❧','·','✦']};
-  if(decor){const chars=glyphs[season]||glyphs.summer;for(let i=0;i<18;i++){const p=document.createElement('span');p.className='season-particle';p.textContent=chars[i%chars.length];p.style.left=Math.random()*100+'vw';p.style.top=(-10-Math.random()*30)+'vh';p.style.animationDelay=Math.random()*12+'s';p.style.animationDuration=10+Math.random()*12+'s';p.style.setProperty('--drift',(Math.random()*80-40)+'px');decor.appendChild(p);}}
+  const cfg = window.MUSEUM_CONFIG || {};
+  const TZ = 'Asia/Tashkent';
 
-  function updateDayNight(){
-    let hour; try{hour=Number(new Intl.DateTimeFormat('en-US',{hour:'numeric',hour12:false,timeZone:'Asia/Tashkent'}).format(new Date()));}catch(_){hour=new Date().getHours();}
-    const day=hour>=7&&hour<19;
-    document.body.classList.toggle('time-day',day); document.body.classList.toggle('time-night',!day);
-    document.body.dataset.time=day?'day':'night';
-    if(badge)badge.textContent=`${labels[season]||season} · ${day?'день':'ночь'}`;
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: TZ,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }).formatToParts(new Date());
+  const get = type => Number(parts.find(p => p.type === type)?.value || 0);
+  const month = get('month');
+  const hour = get('hour') % 24;
+  const minute = get('minute');
+
+  const forcedSeason = String(cfg.seasonMode || 'auto').toLowerCase();
+  const season = forcedSeason !== 'auto' ? forcedSeason :
+    ([12,1,2].includes(month) ? 'winter' :
+     ([3,4,5].includes(month) ? 'spring' :
+      ([6,7,8].includes(month) ? 'summer' : 'autumn')));
+
+  // Ташкент: день 06:00–18:59, ночь 19:00–05:59.
+  const forcedTime = String(cfg.timeMode || 'auto').toLowerCase();
+  const timeOfDay = forcedTime === 'auto'
+    ? ((hour >= 6 && hour < 19) ? 'day' : 'night')
+    : (forcedTime === 'night' ? 'night' : 'day');
+
+  document.body.classList.remove(
+    'season-winter','season-spring','season-summer','season-autumn',
+    'time-day','time-night'
+  );
+  document.body.classList.add(`season-${season}`, `time-${timeOfDay}`);
+  document.body.dataset.season = season;
+  document.body.dataset.timeOfDay = timeOfDay;
+  document.body.dataset.tashkentHour = String(hour);
+
+  const badge = document.getElementById('seasonBadge');
+  const labels = {
+    winter: 'зима', spring: 'весна', summer: 'лето', autumn: 'осень'
+  };
+  const timeLabels = {day:'день', night:'ночь'};
+  if (badge) badge.textContent = `${labels[season] || season} · ${timeLabels[timeOfDay]}`;
+
+  const decor = document.getElementById('seasonDecor');
+  if (!decor) return;
+  const glyphs = {
+    winter:['❄','·','✦'],
+    spring:['✿','·','❀'],
+    summer:['·','✦','˚'],
+    autumn:['❧','·','✦']
+  };
+  const chars = glyphs[season] || glyphs.summer;
+  for(let i=0;i<18;i++){
+    const p = document.createElement('span');
+    p.className = 'season-particle';
+    p.textContent = chars[i % chars.length];
+    p.style.left = (Math.random()*100) + 'vw';
+    p.style.top = (-10-Math.random()*30) + 'vh';
+    p.style.animationDelay = (Math.random()*12) + 's';
+    p.style.animationDuration = (10+Math.random()*12) + 's';
+    p.style.setProperty('--drift',(Math.random()*80-40)+'px');
+    decor.appendChild(p);
   }
-  updateDayNight(); setInterval(updateDayNight,60000);
+
+  // Если пользователь оставил вкладку открытой через полночь/смену сезона,
+  // атмосфера обновится без перезагрузки.
+  setTimeout(() => location.reload(), (60 - minute) * 60 * 1000);
 })();
 
 /* ============================================================
@@ -229,31 +280,104 @@ async function initCloud(){
    ВИНИЛ + ПОЛНОЦЕННЫЙ ПЛЕЕР
    ============================================================ */
 (function vinyl(){
-  const btn=document.getElementById('vinylBtn'),disc=document.getElementById('vinylDisc'),arm=document.getElementById('vinylArm');
-  const audio=document.getElementById('bgm'),progress=document.getElementById('musicProgress'),current=document.getElementById('musicCurrent'),duration=document.getElementById('musicDuration');
-  const status=document.getElementById('musicStatus'),mute=document.getElementById('musicMute'),title=document.getElementById('musicTitle');
-  if(!btn||!audio) return;
-  const fmt=sec=>Number.isFinite(sec)?`${Math.floor(sec/60)}:${String(Math.floor(sec%60)).padStart(2,'0')}`:'0:00';
-  function setPlaying(on){disc?.classList.toggle('playing',on);arm?.classList.toggle('playing',on);btn.textContent=on?'Ⅱ':'▶';}
+  const btn = document.getElementById('vinylBtn');
+  const disc = document.getElementById('vinylDisc');
+  const arm = document.getElementById('vinylArm');
+  const audio = document.getElementById('bgm');
+  const progress = document.getElementById('musicProgress');
+  const current = document.getElementById('musicCurrent');
+  const duration = document.getElementById('musicDuration');
+  const status = document.getElementById('musicStatus');
+  const mute = document.getElementById('musicMute');
+  const title = document.getElementById('musicTitle');
+  const cfg = window.MUSEUM_CONFIG || {};
+  if(!btn || !audio) return;
+
+  const source = cfg.musicUrl || 'music/song.mp3';
+  audio.src = source;
+  if(title && cfg.musicTitle) title.textContent = cfg.musicTitle;
+  let muted = false;
+
+  const fmt = sec => {
+    if(!Number.isFinite(sec)) return '0:00';
+    const m = Math.floor(sec/60), s = Math.floor(sec%60);
+    return `${m}:${String(s).padStart(2,'0')}`;
+  };
+  function setPlaying(on){
+    disc?.classList.toggle('playing',on);
+    arm?.classList.toggle('playing',on);
+    btn.textContent = on ? 'Ⅱ' : '▶';
+    btn.setAttribute('aria-label', on ? 'Пауза' : 'Включить песню');
+  }
   btn.addEventListener('click',async()=>{
-    if(!audio.src){if(status)status.textContent='сначала выберите песню';return;}
-    if(audio.paused){try{await audio.play();setPlaying(true);if(status)status.textContent='играет сейчас';}catch(e){setPlaying(false);if(status)status.textContent='браузер не смог запустить этот файл';}}
-    else{audio.pause();setPlaying(false);if(status)status.textContent='пауза';}
+    if(audio.paused){
+      try{
+        await audio.play();
+        setPlaying(true);
+        if(status) status.textContent='играет сейчас';
+      }catch(err){
+        setPlaying(false);
+        if(status) status.textContent='не удалось открыть музыку — проверь music/song.mp3';
+      }
+    }else{
+      audio.pause();
+      setPlaying(false);
+      if(status) status.textContent='пауза';
+    }
   });
-  audio.addEventListener('loadedmetadata',()=>{if(duration)duration.textContent=fmt(audio.duration);});
-  audio.addEventListener('timeupdate',()=>{if(current)current.textContent=fmt(audio.currentTime);if(progress&&audio.duration)progress.value=(audio.currentTime/audio.duration)*100;});
-  progress?.addEventListener('input',()=>{if(audio.duration)audio.currentTime=Number(progress.value)/100*audio.duration;});
-  audio.addEventListener('play',()=>setPlaying(true)); audio.addEventListener('pause',()=>setPlaying(false));
-  audio.addEventListener('ended',()=>setPlaying(false));
-  audio.addEventListener('error',()=>{setPlaying(false);if(status)status.textContent='не удалось открыть этот трек';});
-  mute?.addEventListener('click',()=>{audio.muted=!audio.muted;mute.textContent=audio.muted?'×':'⌕';});
-  window.addEventListener('music:select',e=>{
-    const t=e.detail; if(!t?.url)return;
-    audio.pause(); audio.src=t.url; audio.load(); if(title)title.textContent=t.title||'без названия';
-    if(status)status.textContent=t.artist?`${t.artist} · готово к воспроизведению`:'готово к воспроизведению';
-    if(current)current.textContent='0:00'; if(duration)duration.textContent='0:00'; if(progress)progress.value=0;
+  audio.addEventListener('loadedmetadata',()=>{
+    if(duration) duration.textContent=fmt(audio.duration);
+  });
+  audio.addEventListener('timeupdate',()=>{
+    if(current) current.textContent=fmt(audio.currentTime);
+    if(progress && Number.isFinite(audio.duration) && audio.duration>0) progress.value=(audio.currentTime/audio.duration)*100;
+  });
+  progress?.addEventListener('input',()=>{
+    if(Number.isFinite(audio.duration) && audio.duration>0) audio.currentTime=(Number(progress.value)/100)*audio.duration;
+  });
+  audio.addEventListener('play',()=>setPlaying(true));
+  audio.addEventListener('pause',()=>setPlaying(false));
+  audio.addEventListener('error',()=>{
+    setPlaying(false);
+    if(status) status.textContent='музыка не найдена — добавь файл music/song.mp3';
+  });
+  mute?.addEventListener('click',()=>{
+    muted=!muted;
+    audio.muted=muted;
+    mute.textContent=muted?'×':'⌕';
+    mute.setAttribute('aria-label',muted?'Включить звук':'Выключить звук');
   });
 })();
+
+
+/* ============================================================
+   МИНИ-ИГРА: собери сердца
+   ============================================================ */
+(function heartsGame(){
+  const field = document.getElementById('heartField');
+  const counter = document.getElementById('heartsLeft');
+  const total = 8;
+  let left = total;
+  counter.textContent = left;
+
+  for(let i=0;i<total;i++){
+    const h = document.createElement('span');
+    h.className = 'floating-heart';
+    h.textContent = '♥';
+    h.style.left = (5 + Math.random()*85) + '%';
+    h.style.top = (5 + Math.random()*80) + '%';
+    h.style.animationDelay = (Math.random()*3) + 's';
+    h.style.color = Math.random() > 0.5 ? '#d4af6a' : '#f3efe6';
+    h.addEventListener('click', ()=>{
+      if(h.classList.contains('collected')) return;
+      h.classList.add('collected');
+      left--;
+      counter.textContent = left;
+    }, {once:true});
+    field.appendChild(h);
+  }
+})();
+
 
 /* ============================================================
    ПИСЬМО: печатающийся текст при появлении в зоне видимости
@@ -545,71 +669,334 @@ window.addEventListener('resize', ()=>{
 
 
 /* ============================================================
-   МУЗЕЙ — облако: фото + видео + аудио
+   МУЗЕЙ — облако + офлайн-резерв
    ============================================================ */
 (async function museum(){
-  const grid=document.getElementById('museumGrid'); if(!grid)return;
-  const cfg=window.MUSEUM_CONFIG||{};
-  const status=document.getElementById('museumStatus'),statusText=document.getElementById('museumStatusText');
-  const addBtn=document.getElementById('museumAddBtn'),refreshBtn=document.getElementById('museumRefreshBtn'),randomBtn=document.getElementById('museumRandomBtn');
-  const featureTitle=document.getElementById('museumFeatureTitle'),featureText=document.getElementById('museumFeatureText'),empty=document.getElementById('museumEmpty');
-  const addModal=document.getElementById('museumAddModal'),viewModal=document.getElementById('museumViewModal'),addClose=document.getElementById('museumAddClose'),viewClose=document.getElementById('museumViewClose');
-  const saveBtn=document.getElementById('entrySaveBtn'),dateInput=document.getElementById('entryDate'),titleInput=document.getElementById('entryTitle'),textInput=document.getElementById('entryText');
-  const photosInput=document.getElementById('entryPhotos'),videosInput=document.getElementById('entryVideos'),audioInput=document.getElementById('entryAudio'),preview=document.getElementById('entryPreview');
-  const viewContent=document.getElementById('museumViewContent'),importBtn=document.getElementById('museumImportBtn'),importFile=document.getElementById('museumImportFile'),exportBtn=document.getElementById('museumExportBtn'),cloudHint=document.getElementById('cloudHint');
-  const BUCKET=cfg.bucket||'museum-media',TABLE='memories',MUSIC_TABLE='music_tracks';
-  let cache=localBackupRead(),tempPhotos=[],tempVideos=[],tempAudio=null;
-  const MAX_PHOTOS=6,MAX_VIDEOS=3,MAX_VIDEO_MB=250;
+  const grid=document.getElementById('museumGrid');
+  if(!grid) return;
 
-  function setStatus(kind,text){status.className='museum-status '+kind;statusText.textContent=text;}
-  function normalize(row){return {id:row.id,date:row.date_label||'',title:row.title||'',text:row.body||'',photos:Array.isArray(row.photo_paths)?row.photo_paths:[],videos:Array.isArray(row.video_paths)?row.video_paths:[],audio:row.audio_path||null,createdAt:new Date(row.created_at||Date.now()).getTime(),createdBy:row.created_by||null,cloud:true};}
-  async function signed(path,expires=3600){if(!supabaseClient||!path)return null;const {data,error}=await supabaseClient.storage.from(BUCKET).createSignedUrl(path,expires);return error?null:data?.signedUrl||null;}
-  async function mediaUrls(paths){return (await Promise.all((paths||[]).map(signed))).filter(Boolean);}
-  async function loadCloud(){if(!supabaseClient)return null;const {data,error}=await supabaseClient.from(TABLE).select('id,date_label,title,body,photo_paths,video_paths,audio_path,created_at,created_by').eq('room_id',cfg.museumRoomId).order('created_at',{ascending:false});if(error)throw error;const entries=data.map(normalize);cache=entries;localBackupWrite(entries);return entries;}
-  function sorted(a){return [...a].sort((x,y)=>y.createdAt-x.createdAt);}
-  function mediaBadge(e){const n=(e.photos?.length||0)+(e.videos?.length||0)+(e.audio?1:0);return n?`<span class="media-badge">${e.photos?.length?`фото ${e.photos.length}`:''}${e.videos?.length?`${e.photos?.length?' · ':''}видео ${e.videos.length}`:''}${e.audio?`${(e.photos?.length||e.videos?.length)?' · ':''}песня`:''}</span>`:'';}
-  function render(entries){entries=sorted(entries);grid.innerHTML='';empty.style.display=entries.length?'none':'block';const now=Date.now(),lastVisit=Number(safeGet('ourStory_museum_last_visit')||0);let newCount=0;
-    entries.forEach(e=>{const isNew=lastVisit&&e.createdAt>lastVisit;if(isNew)newCount++;const card=document.createElement('article');card.className='museum-card'+(isNew?' is-new':'');
-      card.innerHTML=`<div class="museum-card-photo">${e.photos?.length?'<div class="museum-photo-placeholder">фото</div>':''}${e.videos?.length?'<div class="museum-media-corner">video</div>':''}${e.audio?'<div class="museum-audio-corner">♫</div>':''}</div><span class="museum-card-sync">${isNew?'новое · ':''}${e.cloud?'облако':'офлайн'}</span><div class="museum-card-body"><div class="museum-card-date">${escapeHtml(e.date||new Date(e.createdAt).toLocaleDateString('ru-RU'))}</div><div class="museum-card-title">${escapeHtml(e.title||'без названия')}</div><div class="museum-card-text">${escapeHtml(e.text||'')}</div>${mediaBadge(e)}</div>`;
-      if(e.photos?.length){const holder=card.querySelector('.museum-card-photo');signed(e.photos[0]).then(u=>{if(u)holder.innerHTML=`<img src="${u}" alt="" loading="lazy">${e.videos?.length?'<div class="museum-media-corner">video</div>':''}${e.audio?'<div class="museum-audio-corner">♫</div>':''}`;});}
-      card.addEventListener('click',()=>openView(e.id));grid.appendChild(card);});
-    const stats=document.getElementById('museumStats');if(stats){const ms=new Date();ms.setDate(1);ms.setHours(0,0,0,0);const thisMonth=entries.filter(e=>e.createdAt>=ms.getTime()).length;const latest=entries[0]?.createdAt;stats.innerHTML=`<span>${entries.length} ${entries.length===1?'глава':'глав'}</span><span>${thisMonth} в этом месяце</span><span>последняя · ${latest?escapeHtml(new Date(latest).toLocaleDateString('ru-RU',{day:'numeric',month:'long'})):'пока нет'}</span>${newCount?`<span class="new-stat">+${newCount} с прошлого визита</span>`:''}`;}
-    const first=entries[0];featureTitle.textContent=first?.title||'здесь пока тихо';featureText.textContent=first?.text||'Добавьте первое воспоминание — и музей начнёт жить.';if(entries.length)safeSet('ourStory_museum_last_visit',String(now));
+  const cfg=window.MUSEUM_CONFIG || {};
+  const status=document.getElementById('museumStatus');
+  const statusText=document.getElementById('museumStatusText');
+  const addBtn=document.getElementById('museumAddBtn');
+  const refreshBtn=document.getElementById('museumRefreshBtn');
+  const randomBtn=document.getElementById('museumRandomBtn');
+  const featureTitle=document.getElementById('museumFeatureTitle');
+  const featureText=document.getElementById('museumFeatureText');
+  const empty=document.getElementById('museumEmpty');
+  const addModal=document.getElementById('museumAddModal');
+  const viewModal=document.getElementById('museumViewModal');
+  const addClose=document.getElementById('museumAddClose');
+  const viewClose=document.getElementById('museumViewClose');
+  const saveBtn=document.getElementById('entrySaveBtn');
+  const dateInput=document.getElementById('entryDate');
+  const titleInput=document.getElementById('entryTitle');
+  const textInput=document.getElementById('entryText');
+  const photosInput=document.getElementById('entryPhotos');
+  const preview=document.getElementById('entryPreview');
+  const viewContent=document.getElementById('museumViewContent');
+  const importBtn=document.getElementById('museumImportBtn');
+  const importFile=document.getElementById('museumImportFile');
+  const exportBtn=document.getElementById('museumExportBtn');
+  const cloudHint=document.getElementById('cloudHint');
+
+  let cache=localBackupRead();
+  let tempFiles=[];
+  const MAX_PHOTOS=6;
+  const TABLE='memories';
+  const BUCKET=cfg.bucket || 'museum-media';
+
+  function setStatus(kind,text){
+    status.className='museum-status '+kind;
+    statusText.textContent=text;
   }
-  async function refresh(){setStatus('','синхронизирую…');try{const cloud=await loadCloud();if(cloud){render(cloud);setStatus('online','облако синхронизировано');}else{cache=localBackupRead();render(cache);setStatus('offline','локальный режим');}}catch(e){console.error(e);cache=localBackupRead();render(cache);setStatus('error','облако недоступно · офлайн-копия');}}
-  function resetForm(){dateInput.value='';titleInput.value='';textInput.value='';photosInput.value='';videosInput.value='';audioInput.value='';preview.innerHTML='';tempPhotos=[];tempVideos=[];tempAudio=null;}
-  function openAdd(){resetForm();addModal.classList.add('show');}
-  function closeAdd(){addModal.classList.remove('show');}
-  function previewMedia(){preview.innerHTML='';tempPhotos.forEach(f=>{const u=URL.createObjectURL(f);const img=document.createElement('img');img.src=u;img.onload=()=>URL.revokeObjectURL(u);preview.appendChild(img);});tempVideos.forEach(f=>{const v=document.createElement('video');v.src=URL.createObjectURL(f);v.muted=true;v.controls=true;preview.appendChild(v);});if(tempAudio){const p=document.createElement('span');p.className='preview-audio';p.textContent=`♫ ${tempAudio.name}`;preview.appendChild(p);}}
-  photosInput.addEventListener('change',()=>{tempPhotos=Array.from(photosInput.files||[]).slice(0,MAX_PHOTOS);previewMedia();});
-  videosInput.addEventListener('change',()=>{tempVideos=Array.from(videosInput.files||[]).slice(0,MAX_VIDEOS);const tooBig=tempVideos.find(f=>f.size>MAX_VIDEO_MB*1024*1024);if(tooBig){alert(`Видео «${tooBig.name}» больше ${MAX_VIDEO_MB} МБ. Выбери файл поменьше.`);tempVideos=tempVideos.filter(f=>f.size<=MAX_VIDEO_MB*1024*1024);videosInput.value='';}previewMedia();});
-  audioInput.addEventListener('change',()=>{tempAudio=(audioInput.files||[])[0]||null;previewMedia();});
-  async function uploadFile(file,path,contentType){const {error}=await supabaseClient.storage.from(BUCKET).upload(path,file,{contentType:contentType||file.type||'application/octet-stream',upsert:false});if(error)throw error;return path;}
-  async function uploadImage(file,path){const blob=await fileToCompressedBlob(file,cfg.imageMaxDimension||1800,cfg.imageQuality||.82);return uploadFile(blob,path,'image/jpeg');}
-  async function saveCloud(title,text,date){const id=uid(),photos=[],videos=[],uploaded=[];try{for(let i=0;i<tempPhotos.length;i++){const p=await uploadImage(tempPhotos[i],`${cfg.museumRoomId}/${id}/photos/${Date.now()}-${i}.jpg`);photos.push(p);uploaded.push(p);}for(let i=0;i<tempVideos.length;i++){const p=await uploadFile(tempVideos[i],`${cfg.museumRoomId}/${id}/videos/${Date.now()}-${i}-${safeName(tempVideos[i].name)}`);videos.push(p);uploaded.push(p);}let audio=null;if(tempAudio){audio=await uploadFile(tempAudio,`${cfg.museumRoomId}/${id}/audio/${Date.now()}-${safeName(tempAudio.name)}`,tempAudio.type);uploaded.push(audio);}
-      if(!supabaseClient)return {id,date,title,text,photos:[],videos:[],audio:null,createdAt:Date.now(),cloud:false};
-      const {data,error}=await supabaseClient.from(TABLE).insert({id,room_id:cfg.museumRoomId,date_label:date,title,body:text,photo_paths:photos,video_paths:videos,audio_path:audio,created_by:currentUser?.id||null}).select().single();if(error)throw error;return normalize(data);
-    }catch(e){if(supabaseClient&&uploaded.length)await supabaseClient.storage.from(BUCKET).remove(uploaded).catch(()=>{});throw e;}}
-  function safeName(name){return String(name||'file').replace(/[^a-zA-Z0-9._-]+/g,'_').slice(-100);}
-  async function openView(id){const e=cache.find(x=>x.id===id);if(!e)return;const [photos,videos,audio]=await Promise.all([mediaUrls(e.photos),mediaUrls(e.videos),signed(e.audio)]);viewContent.innerHTML=`<div class="museum-view-date">${escapeHtml(e.date||new Date(e.createdAt).toLocaleDateString('ru-RU'))}</div><div class="museum-view-title">${escapeHtml(e.title||'без названия')}</div>${photos.length?`<div class="museum-view-photos">${photos.map(u=>`<img src="${u}" alt="" loading="lazy">`).join('')}</div>`:''}${videos.length?`<div class="museum-view-videos">${videos.map(u=>`<video src="${u}" controls playsinline preload="metadata"></video>`).join('')}</div>`:''}${audio?`<div class="museum-view-audio"><span>♫ песня этого события</span><audio src="${audio}" controls preload="metadata"></audio></div>`:''}<div class="museum-view-text">${escapeHtml(e.text||'')}</div><div class="museum-view-actions"><button class="museum-delete-btn" id="museumDeleteBtn">удалить главу</button></div>`;document.getElementById('museumDeleteBtn').addEventListener('click',()=>deleteEntry(e));viewModal.classList.add('show');}
-  async function deleteEntry(e){if(!confirm('Удалить эту главу вместе с фото, видео и песней?'))return;try{const paths=[...(e.photos||[]),...(e.videos||[]),...(e.audio?[e.audio]:[])];if(supabaseClient){if(paths.length)await supabaseClient.storage.from(BUCKET).remove(paths);const {error}=await supabaseClient.from(TABLE).delete().eq('id',e.id).eq('room_id',cfg.museumRoomId);if(error)throw error;}cache=cache.filter(x=>x.id!==e.id);localBackupWrite(cache);render(cache);viewModal.classList.remove('show');}catch(err){console.error(err);alert('Не удалось удалить главу. Проверь интернет и попробуй ещё раз.');}}
-  saveBtn.addEventListener('click',async()=>{const title=titleInput.value.trim(),text=textInput.value.trim(),date=dateInput.value.trim();if(!title&&!text&&!tempPhotos.length&&!tempVideos.length&&!tempAudio){alert('Добавьте хотя бы заголовок, текст или медиа.');return;}if(!supabaseClient){alert('Облако сейчас не подключено. Для фото, видео и музыки нужен Supabase.');return;}saveBtn.disabled=true;saveBtn.textContent='загружаю…';try{await saveCloud(title,text,date);await refresh();closeAdd();}catch(e){console.error(e);alert(`Не удалось сохранить: ${e.message||'ошибка облака'}`);}finally{saveBtn.disabled=false;saveBtn.textContent='сохранить главу';}});
-  randomBtn.addEventListener('click',async()=>{if(cache.length)await openView(cache[Math.floor(Math.random()*cache.length)].id);});refreshBtn.addEventListener('click',refresh);addBtn.addEventListener('click',openAdd);addClose.addEventListener('click',closeAdd);viewClose.addEventListener('click',()=>viewModal.classList.remove('show'));addModal.addEventListener('click',e=>{if(e.target===addModal)closeAdd();});viewModal.addEventListener('click',e=>{if(e.target===viewModal)viewModal.classList.remove('show');});
-  exportBtn.addEventListener('click',()=>{const blob=new Blob([JSON.stringify(cache.map(({_signedPhotos,...x})=>x),null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`our-museum-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);});
-  importBtn.addEventListener('click',()=>importFile.click());importFile.addEventListener('change',()=>{const f=importFile.files?.[0];if(!f)return;const r=new FileReader();r.onload=async()=>{try{const incoming=JSON.parse(r.result);if(!Array.isArray(incoming))throw new Error('bad format');if(!supabaseClient){alert('Для восстановления в облако сначала подключите Supabase.');return;}let added=0;for(const x of incoming){if(!x?.id||cache.some(e=>e.id===x.id))continue;const {error}=await supabaseClient.from(TABLE).insert({id:x.id,room_id:cfg.museumRoomId,date_label:x.date||'',title:x.title||'',body:x.text||'',photo_paths:Array.isArray(x.photos)?x.photos:[],video_paths:Array.isArray(x.videos)?x.videos:[],audio_path:x.audio||null,created_by:currentUser?.id||null});if(!error)added++;}await refresh();alert(`Восстановление завершено. Добавлено: ${added}.`);}catch(e){console.error(e);alert('Не удалось восстановить резервную копию.');}finally{importFile.value='';}};r.readAsText(f);});
-  if(!cfg.enabled)cloudHint.textContent='Облако отключено. Для новых глав с медиа включите Supabase в config.js.';await initCloud();await refresh();
-})();
 
-/* ============================================================
-   БИБЛИОТЕКА САУНДТРЕКА
-   ============================================================ */
-(async function musicLibrary(){
-  const list=document.getElementById('musicList');if(!list)return;const cfg=window.MUSEUM_CONFIG||{};const addBtn=document.getElementById('musicAddBtn'),modal=document.getElementById('musicAddModal'),close=document.getElementById('musicAddClose'),titleInput=document.getElementById('musicTrackTitle'),artistInput=document.getElementById('musicTrackArtist'),fileInput=document.getElementById('musicTrackFile'),saveBtn=document.getElementById('musicTrackSaveBtn'),empty=document.getElementById('musicEmpty');const TABLE='music_tracks',BUCKET=cfg.bucket||'museum-media';let tracks=[];
-  async function signed(path,expires=3600){if(!supabaseClient||!path)return null;const {data,error}=await supabaseClient.storage.from(BUCKET).createSignedUrl(path,expires);return error?null:data?.signedUrl||null;}
-  function render(){list.innerHTML='';empty.style.display=tracks.length?'none':'block';tracks.forEach((t,i)=>{const row=document.createElement('div');row.className='music-track';row.innerHTML=`<button class="music-track-play" type="button" aria-label="Играть">${i===0?'▶':'▶'}</button><div class="music-track-info"><strong>${escapeHtml(t.title||'без названия')}</strong><span>${escapeHtml(t.artist||'')}</span></div><button class="music-track-delete" type="button" aria-label="Удалить">×</button>`;row.querySelector('.music-track-play').addEventListener('click',()=>select(t));row.querySelector('.music-track-delete').addEventListener('click',async()=>{if(!confirm('Удалить эту песню из вашего саундтрека?'))return;try{if(supabaseClient){if(t.audio_path)await supabaseClient.storage.from(BUCKET).remove([t.audio_path]);const {error}=await supabaseClient.from(TABLE).delete().eq('id',t.id).eq('room_id',cfg.museumRoomId);if(error)throw error;}tracks=tracks.filter(x=>x.id!==t.id);render();}catch(e){alert('Не удалось удалить трек.');}});list.appendChild(row);});}
-  async function select(t){const url=await signed(t.audio_path);if(!url){alert('Не удалось открыть этот трек.');return;}window.dispatchEvent(new CustomEvent('music:select',{detail:{url,title:t.title,artist:t.artist}}));document.querySelectorAll('.music-track').forEach(x=>x.classList.remove('selected'));const row=[...document.querySelectorAll('.music-track')].find(x=>x.querySelector('.music-track-info strong')?.textContent===t.title);row?.classList.add('selected');}
-  async function load(){if(!supabaseClient){tracks=[];render();return;}const {data,error}=await supabaseClient.from(TABLE).select('id,title,artist,audio_path,created_at').eq('room_id',cfg.museumRoomId).order('created_at',{ascending:true});if(error){console.error(error);tracks=[];render();return;}tracks=data||[];render();if(tracks[0])select(tracks[0]);}
-  addBtn.addEventListener('click',()=>{titleInput.value='';artistInput.value='';fileInput.value='';modal.classList.add('show');});close.addEventListener('click',()=>modal.classList.remove('show'));modal.addEventListener('click',e=>{if(e.target===modal)modal.classList.remove('show');});
-  saveBtn.addEventListener('click',async()=>{const title=titleInput.value.trim(),artist=artistInput.value.trim(),file=fileInput.files?.[0];if(!title||!file){alert('Укажи название и выбери аудиофайл.');return;}if(!supabaseClient){alert('Облако не подключено.');return;}saveBtn.disabled=true;saveBtn.textContent='загружаю…';const id=uid(),path=`${cfg.museumRoomId}/music/${id}-${String(file.name).replace(/[^a-zA-Z0-9._-]+/g,'_').slice(-100)}`;try{const {error:upError}=await supabaseClient.storage.from(BUCKET).upload(path,file,{contentType:file.type||'audio/mpeg',upsert:false});if(upError)throw upError;const {data,error}=await supabaseClient.from(TABLE).insert({id,room_id:cfg.museumRoomId,title,artist,audio_path:path,created_by:currentUser?.id||null}).select().single();if(error){await supabaseClient.storage.from(BUCKET).remove([path]);throw error;}tracks.push(data);render();modal.classList.remove('show');await select(data);}catch(e){console.error(e);alert(`Не удалось добавить песню: ${e.message||'ошибка'}`);}finally{saveBtn.disabled=false;saveBtn.textContent='добавить в саундтрек';}});
-  await load();
+  function normalize(row){
+    return {
+      id:row.id,
+      date:row.date_label || '',
+      title:row.title || '',
+      text:row.body || '',
+      photos:Array.isArray(row.photo_paths)?row.photo_paths:[],
+      createdAt:new Date(row.created_at || Date.now()).getTime(),
+      createdBy:row.created_by || null,
+      cloud:true
+    };
+  }
+
+  async function photoUrls(entry){
+    if(!supabaseClient || !entry.photos?.length) return [];
+    const out=[];
+    for(const path of entry.photos){
+      const {data,error}=await supabaseClient.storage.from(BUCKET).createSignedUrl(path,3600);
+      if(!error && data?.signedUrl) out.push(data.signedUrl);
+    }
+    return out;
+  }
+
+  async function loadCloud(){
+    if(!supabaseClient) return null;
+    const {data,error}=await supabaseClient
+      .from(TABLE)
+      .select('id,date_label,title,body,photo_paths,created_at,created_by')
+      .eq('room_id',cfg.museumRoomId)
+      .order('created_at',{ascending:false});
+    if(error) throw error;
+    const entries=data.map(normalize);
+    cache=entries;
+    localBackupWrite(entries);
+    return entries;
+  }
+
+  function sorted(entries){ return [...entries].sort((a,b)=>b.createdAt-a.createdAt); }
+
+  function render(entries){
+    entries=sorted(entries);
+    grid.innerHTML='';
+    empty.style.display=entries.length?'none':'block';
+    const now=Date.now();
+    const lastVisit=Number(safeGet('ourStory_museum_last_visit')||0);
+    let newCount=0;
+    entries.forEach(entry=>{
+      if(lastVisit && entry.createdAt>lastVisit) newCount++;
+      const card=document.createElement('article');
+      card.className='museum-card';
+      const cover=entry._signedPhotos?.[0] || '';
+      const isNew=lastVisit && entry.createdAt>lastVisit;
+      card.innerHTML=`
+        <div class="museum-card-photo">${cover?`<img src="${cover}" alt="" loading="lazy">`:'<span class="museum-no-photo">✦</span>'}</div>
+        <span class="museum-card-sync">${isNew?'новое · ':''}${entry.cloud?'облако':'офлайн'}</span>
+        <div class="museum-card-body">
+          <div class="museum-card-date">${escapeHtml(entry.date || new Date(entry.createdAt).toLocaleDateString('ru-RU'))}</div>
+          <div class="museum-card-title">${escapeHtml(entry.title || 'без названия')}</div>
+          <div class="museum-card-text">${escapeHtml(entry.text || '')}</div>
+        </div>`;
+      if(isNew) card.classList.add('is-new');
+      card.addEventListener('click',()=>openView(entry.id));
+      grid.appendChild(card);
+    });
+
+    const stats=document.getElementById('museumStats');
+    if(stats){
+      const monthStart=new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
+      const thisMonth=entries.filter(e=>e.createdAt>=monthStart.getTime()).length;
+      const latest=entries[0]?.createdAt;
+      const latestText=latest ? new Date(latest).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}) : 'пока нет';
+      stats.innerHTML=`<span>${entries.length} ${entries.length===1?'глава':'глав'}</span><span>${thisMonth} в этом месяце</span><span>последняя · ${escapeHtml(latestText)}</span>${newCount?`<span class="new-stat">+${newCount} с прошлого визита</span>`:''}`;
+    }
+
+    const first=entries[0];
+    if(first){
+      featureTitle.textContent=first.title || 'новая глава';
+      featureText.textContent=first.text || 'Здесь уже есть ваш новый кадр.';
+    }else{
+      featureTitle.textContent='здесь пока тихо';
+      featureText.textContent='Добавьте первое воспоминание — и музей начнёт жить.';
+    }
+    if(entries.length) safeSet('ourStory_museum_last_visit',String(now));
+  }
+
+  async function attachSignedUrls(entries){
+    if(!supabaseClient) return entries;
+    return Promise.all(entries.map(async e=>{
+      e._signedPhotos=await photoUrls(e);
+      return e;
+    }));
+  }
+
+  async function refresh(){
+    setStatus('','синхронизирую…');
+    try{
+      const cloudEntries=await loadCloud();
+      if(cloudEntries){
+        cache=await attachSignedUrls(cloudEntries);
+        render(cache);
+        setStatus('online','облако синхронизировано');
+      }else{
+        cache=localBackupRead();
+        render(cache);
+        setStatus('offline','локальный режим');
+      }
+    }catch(error){
+      console.error(error);
+      cache=localBackupRead();
+      render(cache);
+      setStatus('error','облако недоступно · офлайн-копия');
+    }
+  }
+
+  function resetForm(){
+    dateInput.value=''; titleInput.value=''; textInput.value='';
+    photosInput.value=''; preview.innerHTML=''; tempFiles=[];
+  }
+
+  function openAdd(){ resetForm(); addModal.classList.add('show'); }
+  function closeAdd(){ addModal.classList.remove('show'); }
+
+  async function openView(id){
+    const entry=cache.find(x=>x.id===id);
+    if(!entry) return;
+    const urls=entry._signedPhotos?.length?entry._signedPhotos:await photoUrls(entry);
+    viewContent.innerHTML=`
+      <div class="museum-view-date">${escapeHtml(entry.date || new Date(entry.createdAt).toLocaleDateString('ru-RU'))}</div>
+      <div class="museum-view-title">${escapeHtml(entry.title || 'без названия')}</div>
+      ${urls.length?`<div class="museum-view-photos">${urls.map(u=>`<img src="${u}" alt="" loading="lazy">`).join('')}</div>`:''}
+      <div class="museum-view-text">${escapeHtml(entry.text || '')}</div>
+      <div class="museum-view-actions">
+        <button class="museum-delete-btn" id="museumDeleteBtn">удалить</button>
+      </div>`;
+    document.getElementById('museumDeleteBtn').addEventListener('click',()=>deleteEntry(entry));
+    viewModal.classList.add('show');
+  }
+
+  async function deleteEntry(entry){
+    if(!confirm('Удалить это воспоминание из облака?')) return;
+    try{
+      if(supabaseClient){
+        if(entry.photos?.length){
+          await supabaseClient.storage.from(BUCKET).remove(entry.photos);
+        }
+        const {error}=await supabaseClient.from(TABLE).delete().eq('id',entry.id).eq('room_id',cfg.museumRoomId);
+        if(error) throw error;
+      }
+      cache=cache.filter(e=>e.id!==entry.id);
+      localBackupWrite(cache);
+      render(cache);
+      viewModal.classList.remove('show');
+    }catch(error){
+      console.error(error);
+      alert('Не удалось удалить запись. Проверь интернет и попробуй ещё раз.');
+    }
+  }
+
+  photosInput.addEventListener('change',async()=>{
+    tempFiles=Array.from(photosInput.files).slice(0,MAX_PHOTOS);
+    preview.innerHTML='<span class="scene-note">сжимаю фото…</span>';
+    try{
+      const thumbs=await Promise.all(tempFiles.map(f=>fileToCompressedBlob(f,cfg.imageMaxDimension||1800,cfg.imageQuality||.82).then(blob=>URL.createObjectURL(blob))));
+      preview.innerHTML='';
+      thumbs.forEach(url=>{
+        const img=document.createElement('img'); img.src=url; preview.appendChild(img);
+      });
+    }catch(error){
+      preview.innerHTML='<span class="scene-note">не удалось подготовить фото</span>';
+    }
+  });
+
+  async function saveCloud(title,text,date){
+    const id=uid();
+    const paths=[];
+    try{
+      if(tempFiles.length && supabaseClient){
+        for(let i=0;i<tempFiles.length;i++){
+          const file=tempFiles[i];
+          const blob=await fileToCompressedBlob(file,cfg.imageMaxDimension||1800,cfg.imageQuality||.82);
+          const path=`${cfg.museumRoomId}/${id}/${Date.now()}-${i}.jpg`;
+          const {error}=await supabaseClient.storage.from(BUCKET).upload(path,blob,{contentType:'image/jpeg',upsert:false});
+          if(error) throw error;
+          paths.push(path);
+        }
+      }
+
+      if(supabaseClient){
+        const {data,error}=await supabaseClient.from(TABLE).insert({
+          id,room_id:cfg.museumRoomId,date_label:date,title,body:text,photo_paths:paths,created_by:currentUser?.id||null
+        }).select().single();
+        if(error) throw error;
+        return normalize(data);
+      }
+
+      const local={id,date,title,text,photos:[],createdAt:Date.now(),cloud:false};
+      cache=[local,...cache]; localBackupWrite(cache); return local;
+    }catch(error){
+      // если облачная запись не завершилась после части загрузок — пытаемся почистить хвост
+      if(supabaseClient && paths.length){
+        await supabaseClient.storage.from(BUCKET).remove(paths).catch(()=>{});
+      }
+      throw error;
+    }
+  }
+
+  saveBtn.addEventListener('click',async()=>{
+    const title=titleInput.value.trim(), text=textInput.value.trim(), date=dateInput.value.trim();
+    if(!title && !text && !tempFiles.length){ alert('Добавьте хотя бы заголовок, текст или фото.'); return; }
+    saveBtn.disabled=true; saveBtn.textContent='сохраняю…';
+    try{
+      const entry=await saveCloud(title,text,date);
+      if(entry){
+        if(supabaseClient){
+          const cloud=await loadCloud();
+          cache=await attachSignedUrls(cloud);
+        }
+        render(cache);
+        closeAdd();
+      }
+    }catch(error){
+      console.error(error);
+      alert('Не удалось сохранить. Проверьте облако и интернет. Ваша форма не потеряна.');
+    }finally{
+      saveBtn.disabled=false; saveBtn.textContent='сохранить в музей';
+    }
+  });
+
+  randomBtn.addEventListener('click',async()=>{
+    if(!cache.length) return;
+    const entry=cache[Math.floor(Math.random()*cache.length)];
+    await openView(entry.id);
+  });
+
+  refreshBtn.addEventListener('click',refresh);
+  addBtn.addEventListener('click',openAdd);
+  addClose.addEventListener('click',closeAdd);
+  viewClose.addEventListener('click',()=>viewModal.classList.remove('show'));
+  addModal.addEventListener('click',e=>{if(e.target===addModal)closeAdd();});
+  viewModal.addEventListener('click',e=>{if(e.target===viewModal)viewModal.classList.remove('show');});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeAdd();viewModal.classList.remove('show');}});
+
+  exportBtn.addEventListener('click',()=>{
+    const plain=cache.map(({_signedPhotos,...entry})=>entry);
+    const blob=new Blob([JSON.stringify(plain,null,2)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download=`our-museum-backup-${new Date().toISOString().slice(0,10)}.json`; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  });
+
+  importBtn.addEventListener('click',()=>importFile.click());
+  importFile.addEventListener('change',()=>{
+    const file=importFile.files?.[0]; if(!file)return;
+    const reader=new FileReader();
+    reader.onload=async()=>{
+      try{
+        const incoming=JSON.parse(reader.result);
+        if(!Array.isArray(incoming)) throw new Error('bad format');
+        if(!supabaseClient){
+          const existingIds=new Set(cache.map(x=>x.id));
+          cache=[...cache,...incoming.filter(x=>x?.id&&!existingIds.has(x.id))];
+          localBackupWrite(cache); render(cache);
+          alert(`Восстановлено: ${incoming.length} записей.`);
+          return;
+        }
+        let added=0;
+        for(const x of incoming){
+          if(!x?.id || cache.some(e=>e.id===x.id)) continue;
+          const {error}=await supabaseClient.from(TABLE).insert({
+            id:x.id,room_id:cfg.museumRoomId,date_label:x.date||'',title:x.title||'',body:x.text||'',photo_paths:Array.isArray(x.photos)?x.photos:[],created_by:currentUser?.id||null
+          });
+          if(!error) added++;
+        }
+        await refresh();
+        alert(`Импорт завершён. Добавлено: ${added}.`);
+      }catch(error){
+        console.error(error); alert('Не удалось восстановить резервную копию.');
+      }finally{ importFile.value=''; }
+    };
+    reader.readAsText(file);
+  });
+
+  if(!cfg.enabled){
+    cloudHint.textContent='Сейчас включён локальный режим. Чтобы музей был общим для двух устройств, заполни config.js и SQL из папки setup.';
+  }
+
+  await initCloud();
+  await refresh();
 })();

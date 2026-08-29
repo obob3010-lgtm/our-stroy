@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>наш музей</title>
+<title>для тебя</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Manrope:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -120,7 +120,7 @@
     <div class="scene-inner wide">
       <p class="eyebrow">живой архив</p>
       <h2 class="scene-title reveal">наш музей</h2>
-      <p class="scene-text small">истории, фотографии, видео и музыка — всё, что вы захотите оставить здесь.</p>
+      <p class="scene-text small">добавляйте сюда фото и истории — сайт растёт вместе с нами</p>
 
       <div class="museum-status-row reveal">
         <span class="museum-status" id="museumStatus"><span class="status-dot"></span><span id="museumStatusText">проверяю облако…</span></span>
@@ -134,20 +134,22 @@
           <p id="museumFeatureText">Добавьте первое воспоминание — и музей начнёт жить.</p>
           <div class="museum-stats" id="museumStats" aria-live="polite"></div>
         </div>
-        <button class="ghost-btn small-btn" id="museumRandomBtn" type="button">случайная глава</button>
+        <button class="ghost-btn small-btn" id="museumRandomBtn" type="button">случайный кадр</button>
       </div>
 
       <div class="museum-toolbar reveal">
-        <button class="solid-btn" id="museumAddBtn">+ новая глава</button>
+        <button class="solid-btn" id="museumAddBtn">+ добавить воспоминание</button>
         <button class="ghost-btn small-btn" id="museumExportBtn">резервная копия</button>
         <button class="ghost-btn small-btn" id="museumImportBtn">восстановить</button>
         <input type="file" id="museumImportFile" accept="application/json" hidden>
       </div>
 
       <div class="museum-grid reveal" id="museumGrid"></div>
-      <p class="museum-empty" id="museumEmpty">пока пусто — добавьте первую главу</p>
+      <p class="museum-empty" id="museumEmpty">пока пусто — добавь первое воспоминание</p>
 
-      <p class="scene-note museum-note">музей синхронизируется через облако. каждая новая глава может содержать фото, видео и одну песню, связанную с этим событием.</p>
+      <p class="scene-note museum-note">
+        музей синхронизируется через облако. добавленное фото и история появляются на другом устройстве после обновления. локальная резервная копия остаётся на случай, если интернет временно пропадёт.
+      </p>
     </div>
   </section>
 
@@ -155,17 +157,16 @@
   <section class="scene" id="scene-vinyl" data-nav="музыка">
     <div class="scene-inner">
       <p class="eyebrow">на фоне</p>
-      <h2 class="scene-title reveal">ваш саундтрек</h2>
+      <h2 class="scene-title reveal">пластинка крутится</h2>
       <div class="vinyl-wrap reveal">
         <div class="vinyl-disc" id="vinylDisc" aria-hidden="true"></div>
         <div class="vinyl-arm" id="vinylArm" aria-hidden="true"></div>
       </div>
-
       <div class="music-player reveal" id="musicPlayer">
         <div class="music-meta">
           <span class="music-kicker">наш саундтрек</span>
-          <strong id="musicTitle">выберите песню</strong>
-          <span id="vinylNote">песни, которые теперь тоже часть вашей истории</span>
+          <strong id="musicTitle">наша песня</strong>
+          <span id="vinylNote">эта песня напоминает мне о тебе</span>
         </div>
         <div class="music-controls">
           <button class="music-play" id="vinylBtn" type="button" aria-label="Включить песню">▶</button>
@@ -175,22 +176,9 @@
           </div>
           <button class="music-volume" id="musicMute" type="button" aria-label="Выключить звук">⌕</button>
         </div>
-        <p class="music-status" id="musicStatus">добавьте первую песню ниже</p>
+        <p class="music-status" id="musicStatus">нажми ▶ — музыка начнётся</p>
       </div>
-
-      <div class="music-library reveal">
-        <div class="music-library-head">
-          <div>
-            <p class="eyebrow">коллекция</p>
-            <h3>песни, которые остались с нами</h3>
-          </div>
-          <button class="solid-btn small-btn" id="musicAddBtn" type="button">+ добавить песню</button>
-        </div>
-        <div class="music-list" id="musicList"></div>
-        <p class="music-empty" id="musicEmpty">здесь пока нет песен</p>
-      </div>
-
-      <audio id="bgm" preload="metadata"></audio>
+      <audio id="bgm" src="music/song.mp3" loop preload="metadata"></audio>
     </div>
   </section>
 
@@ -266,35 +254,24 @@
 </div>
 
 <div class="museum-modal" id="museumAddModal">
-  <div class="museum-modal-inner wide">
+  <div class="museum-modal-inner">
     <button class="modal-close" id="museumAddClose" aria-label="Закрыть">✕</button>
-    <p class="eyebrow">новая глава</p>
-    <h3>добавить событие</h3>
+    <h3>новое воспоминание</h3>
     <label>дата <span class="opt">(необязательно)</span>
-      <input type="text" id="entryDate" placeholder="напр. 28.08 или «этим летом»">
+      <input type="text" id="entryDate" placeholder="напр. 12.08 или «этим летом»">
     </label>
     <label>заголовок
       <input type="text" id="entryTitle" placeholder="как это назвать">
     </label>
     <label>история
-      <textarea id="entryText" rows="5" placeholder="что произошло, что запомнилось"></textarea>
+      <textarea id="entryText" rows="4" placeholder="что произошло"></textarea>
     </label>
-
-    <div class="media-upload-grid">
-      <label>фото <span class="opt">(до 6)</span>
-        <input type="file" id="entryPhotos" accept="image/*" multiple>
-      </label>
-      <label>видео <span class="opt">(до 3)</span>
-        <input type="file" id="entryVideos" accept="video/*" multiple>
-      </label>
-      <label>песня к событию <span class="opt">(1 файл)</span>
-        <input type="file" id="entryAudio" accept="audio/*">
-      </label>
-    </div>
-
-    <p class="form-hint" id="cloudHint">фото, видео и песня будут загружены в облако.</p>
+    <label>фото <span class="opt">(до 6 штук)</span>
+      <input type="file" id="entryPhotos" accept="image/*" multiple>
+    </label>
+    <p class="form-hint" id="cloudHint">Фото будут сжаты и загружены в облачное хранилище.</p>
     <div class="entry-preview" id="entryPreview"></div>
-    <button class="solid-btn" id="entrySaveBtn">сохранить главу</button>
+    <button class="solid-btn" id="entrySaveBtn">сохранить в музей</button>
   </div>
 </div>
 
@@ -302,26 +279,6 @@
   <div class="museum-modal-inner wide">
     <button class="modal-close" id="museumViewClose" aria-label="Закрыть">✕</button>
     <div id="museumViewContent"></div>
-  </div>
-</div>
-
-
-<div class="museum-modal" id="musicAddModal">
-  <div class="museum-modal-inner">
-    <button class="modal-close" id="musicAddClose" aria-label="Закрыть">✕</button>
-    <p class="eyebrow">новый трек</p>
-    <h3>добавить песню в саундтрек</h3>
-    <label>название
-      <input type="text" id="musicTrackTitle" placeholder="например, наша песня">
-    </label>
-    <label>исполнитель <span class="opt">(необязательно)</span>
-      <input type="text" id="musicTrackArtist" placeholder="кто исполняет">
-    </label>
-    <label>аудиофайл
-      <input type="file" id="musicTrackFile" accept="audio/*">
-    </label>
-    <p class="form-hint">песня будет доступна обоим устройствам через облачный музей.</p>
-    <button class="solid-btn" id="musicTrackSaveBtn">добавить в саундтрек</button>
   </div>
 </div>
 

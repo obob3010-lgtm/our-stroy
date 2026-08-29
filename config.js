@@ -13,4 +13,8 @@ window.MUSEUM_CONFIG = {
   // Размеры сжатия фото перед загрузкой.
   imageMaxDimension: 1800,
   imageQuality: 0.82
+
+  seasonMode: "winter",
+  timeMode: "night"
+};
 };

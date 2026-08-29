@@ -18,7 +18,7 @@ window.MUSEUM_CONFIG = {
 
   // Atmosphere: use "auto" in normal mode. For testing: "winter" + "night", etc.
   seasonMode: "winter",
-  timeMode: "night",
+  timeMode: "dawn",
 
   // Optional built-in local soundtrack. Leave empty when using the cloud music library.
   musicTracks: []

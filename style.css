@@ -99,6 +99,7 @@ button:focus-visible, input:focus-visible{
 
 @media (max-width:820px){
   .side-nav{display:none;}
+  .season-badge{left:14px;top:14px;font-size:.54rem}
 }
 
 /* ============ ЗВЁЗДНЫЙ ФОН ============ */
@@ -667,3 +668,88 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+
+/* ============ СЕЗОНЫ ============ */
+.season-badge{position:fixed;left:22px;top:20px;z-index:35;padding:6px 9px;border:1px solid var(--glass-border);border-radius:999px;background:rgba(5,7,13,.35);backdrop-filter:blur(8px);color:var(--season-accent);font:500 .58rem var(--mono);letter-spacing:.12em;text-transform:uppercase;opacity:.7}
+#seasonDecor{position:fixed;inset:0;pointer-events:none;z-index:2;overflow:hidden;opacity:.42}
+.season-particle{position:absolute;color:var(--season-accent);font-family:var(--serif);font-size:clamp(10px,1.2vw,18px);opacity:0;animation:seasonFall linear infinite;filter:blur(.1px)}
+@keyframes seasonFall{0%{transform:translate3d(0,0,0) rotate(0);opacity:0}10%{opacity:.55}85%{opacity:.28}100%{transform:translate3d(var(--drift),115vh,0) rotate(180deg);opacity:0}}
+body.season-winter{--season-accent:#d9e8f4}
+body.season-spring{--season-accent:#d6b4d5}
+body.season-summer{--season-accent:#e7cf86}
+body.season-autumn{--season-accent:#c98e62}
+body.season-winter #stars{background:radial-gradient(ellipse at 50% 20%,#111d2a 0%,#05070d 72%)}
+body.season-spring #stars{background:radial-gradient(ellipse at 50% 20%,#171522 0%,#05070d 72%)}
+body.season-summer #stars{background:radial-gradient(ellipse at 50% 20%,#151a24 0%,#05070d 72%)}
+body.season-autumn #stars{background:radial-gradient(ellipse at 50% 20%,#211813 0%,#05070d 72%)}
+body.season-autumn .eyebrow,body.season-autumn .cd-block span{color:#d09a67}
+body.season-winter .eyebrow,body.season-winter .cd-block span{color:#bcd4e8}
+body.season-spring .eyebrow,body.season-spring .cd-block span{color:#d6b4d5}
+body.season-summer .eyebrow,body.season-summer .cd-block span{color:#e2c47c}
+
+/* ============ МУЗЫКАЛЬНЫЙ ПЛЕЕР ============ */
+.music-player{width:min(560px,100%);margin:10px auto 0;padding:18px 20px;background:var(--glass);border:1px solid var(--glass-border);border-radius:20px;backdrop-filter:blur(14px);text-align:left}
+.music-meta{display:flex;flex-direction:column;gap:4px}
+.music-kicker{font:500 .65rem var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.music-meta strong{font-family:var(--serif);font-size:1.15rem;font-weight:500}
+.music-meta span:last-child{font-size:.78rem;color:var(--ink-dim)}
+.music-controls{display:flex;align-items:center;gap:12px;margin-top:16px}
+.music-play,.music-volume{width:38px;height:38px;flex:0 0 38px;border:1px solid var(--glass-border);border-radius:50%;background:var(--glass-strong);color:var(--ink);cursor:pointer;transition:.25s}
+.music-play:hover,.music-volume:hover{border-color:var(--gold);transform:translateY(-1px)}
+.music-track-wrap{flex:1;min-width:0}
+.music-progress{display:block;width:100%;accent-color:var(--gold);cursor:pointer}
+.music-time{display:flex;justify-content:space-between;margin-top:5px;font:500 .62rem var(--mono);color:var(--ink-dim)}
+.music-status{margin-top:12px;color:var(--ink-dim);font:.68rem var(--mono);min-height:1em}
+
+/* ============ НОВЫЕ ГЛАВЫ МУЗЕЯ ============ */
+.museum-stats{display:flex;flex-wrap:wrap;gap:7px;margin-top:15px}
+.museum-stats span{padding:6px 9px;border:1px solid var(--glass-border);border-radius:999px;color:var(--ink-dim);font:500 .61rem var(--mono);background:rgba(255,255,255,.025)}
+.museum-stats .new-stat{color:var(--gold-soft);border-color:rgba(212,175,106,.35)}
+.museum-card.is-new{border-color:rgba(212,175,106,.32);box-shadow:0 0 0 1px rgba(212,175,106,.06)}
+.museum-card.is-new .museum-card-title::after{content:'новое';display:inline-block;margin-left:8px;vertical-align:middle;padding:3px 6px;border-radius:999px;background:rgba(212,175,106,.12);color:var(--gold-soft);font:500 .54rem var(--mono);text-transform:uppercase;letter-spacing:.06em}
+
+@media (prefers-reduced-motion:reduce){#seasonDecor{display:none}}
+@media (max-width:600px){.music-player{padding:16px}.music-controls{gap:8px}.music-play,.music-volume{width:34px;height:34px;flex-basis:34px}.museum-stats{gap:5px}.museum-stats span{font-size:.56rem}}
+
+
+/* ============================================================
+   V2 — МЕДИА В ГЛАВАХ + МУЗЫКАЛЬНАЯ БИБЛИОТЕКА
+   ============================================================ */
+.media-upload-grid{display:grid;grid-template-columns:1fr;gap:2px}
+.entry-preview video{width:120px;height:76px;object-fit:cover;border-radius:8px;border:1px solid var(--glass-border)}
+.preview-audio{display:inline-flex;align-items:center;min-height:40px;padding:8px 12px;border:1px solid var(--glass-border);border-radius:10px;color:var(--gold-soft);font:.7rem var(--mono);background:rgba(255,255,255,.025)}
+.museum-card-photo{position:relative;overflow:hidden}
+.museum-card-photo img{width:100%;height:100%;display:block;object-fit:cover}
+.museum-photo-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--ink-dim);font:500 .7rem var(--mono);letter-spacing:.1em;text-transform:uppercase}
+.museum-media-corner,.museum-audio-corner{position:absolute;bottom:10px;padding:5px 8px;border-radius:999px;background:rgba(5,7,13,.75);backdrop-filter:blur(8px);font:500 .58rem var(--mono);color:var(--gold-soft)}
+.museum-media-corner{left:10px}.museum-audio-corner{right:10px;font-size:.75rem}
+.media-badge{display:inline-block;margin-top:10px;padding:5px 8px;border:1px solid var(--glass-border);border-radius:999px;color:var(--gold-soft);font:500 .58rem var(--mono);letter-spacing:.03em}
+.museum-view-videos{display:grid;gap:12px;margin:0 0 20px}
+.museum-view-videos video{display:block;width:100%;max-height:520px;background:#000;border-radius:12px}
+.museum-view-audio{padding:14px;margin-bottom:20px;border:1px solid var(--glass-border);border-radius:14px;background:rgba(255,255,255,.025)}
+.museum-view-audio span{display:block;margin-bottom:8px;color:var(--gold-soft);font:500 .68rem var(--mono)}
+.museum-view-audio audio{width:100%}
+.museum-view-actions{display:flex;justify-content:flex-end}
+.music-library{width:min(560px,100%);margin:28px auto 0;padding:20px;background:var(--glass);border:1px solid var(--glass-border);border-radius:20px;text-align:left}
+.music-library-head{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:16px}
+.music-library-head .eyebrow{margin-bottom:5px}.music-library-head h3{font-family:var(--serif);font-weight:500;font-size:1.05rem}
+.music-list{display:flex;flex-direction:column;gap:8px}
+.music-track{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid transparent;border-radius:12px;transition:.25s;background:rgba(255,255,255,.018)}
+.music-track:hover,.music-track.selected{border-color:rgba(212,175,106,.3);background:rgba(212,175,106,.06)}
+.music-track-play{width:34px;height:34px;flex:0 0 34px;border:1px solid var(--glass-border);border-radius:50%;background:var(--glass-strong);color:var(--ink);cursor:pointer}
+.music-track-info{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}.music-track-info strong{font-family:var(--serif);font-weight:500;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.music-track-info span{font-size:.66rem;color:var(--ink-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.music-track-delete{background:none;border:0;color:var(--ink-dim);font-size:1.05rem;cursor:pointer;padding:4px 7px}.music-track-delete:hover{color:#e08787}
+.music-empty{padding:15px 0 4px;color:var(--ink-dim);font:.72rem var(--mono);text-align:center}
+
+/* День / ночь: атмосфера меняется автоматически по Ташкенту */
+body.time-day{--bg:#0a0e16;--bg-soft:#101722}
+body.time-day #stars{background:radial-gradient(ellipse at 50% 15%,#1d2a3a 0%,#0a0e16 72%)}
+body.time-day #gate{background:radial-gradient(ellipse at 50% 30%,rgba(29,42,58,.68) 0%,rgba(10,14,22,.88) 75%)}
+body.time-day #seasonDecor{opacity:.28}
+body.time-day .season-badge{background:rgba(10,14,22,.22)}
+body.time-night #stars{background:radial-gradient(ellipse at 50% 20%,#0d1220 0%,#05070d 72%)}
+body.time-night #seasonDecor{opacity:.42}
+body.time-night .music-player,body.time-night .music-library{box-shadow:0 18px 60px rgba(0,0,0,.18)}
+body.time-day .scene:first-child::before{content:'';position:absolute;width:38vw;height:38vw;max-width:500px;max-height:500px;top:10%;left:50%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle,rgba(236,220,180,.045),transparent 65%);pointer-events:none}
+
+@media(max-width:620px){.music-library-head{align-items:flex-start;flex-direction:column}.media-upload-grid{gap:0}.museum-view-videos video{max-height:320px}.music-library{padding:16px}}

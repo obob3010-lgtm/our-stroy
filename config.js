@@ -11,8 +11,6 @@ window.MUSEUM_CONFIG = {
 
   // Client-side guardrails. Change only if your Supabase plan supports larger files.
   maxImagesPerPost: 6,
-  maxVideosPerPost: 3,
-  maxVideoMB: 120,
   maxAudioMB: 60,
   maxMusicTracks: 100,
 

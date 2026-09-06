@@ -15,8 +15,8 @@ window.MUSEUM_CONFIG = {
   maxMusicTracks: 100,
 
   // Atmosphere: use "auto" in normal mode. For testing: "winter" + "night", etc.
-  seasonMode: "auto",
-  timeMode: "auto",
+  seasonMode: "winter",
+  timeMode: "night",
 
   // Optional built-in local soundtrack. Leave empty when using the cloud music library.
   musicTracks: []
